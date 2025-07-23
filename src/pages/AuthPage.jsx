@@ -1,21 +1,27 @@
-import {createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword,} from "firebase/auth"
+import {createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup} from "firebase/auth"
 import { useContext, useEffect, useState } from "react"
 import {Button, Col, Form, Image, Modal, Row} from "react-bootstrap"
 import {useNavigate} from "react-router-dom"
 import {AuthContext} from "../components/AuthProvider";
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
+
 
 export default function AuthPage(){
     const[modalShow, setModalShow] = useState(null);
-    const handleShowSignUp = () => setModalShow("signup")
+    const handleShowSignUp = () => setModalShow("signUp")
     const handleShowLogin= () => setModalShow("login")
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const navigate = useNavigate();
     const auth = getAuth()
     const [error, setError] = useState("");
+    
     const {currentUser} = useContext(AuthContext)
+
+
     useEffect(()=> {
-        if( currentUser) navigate("/profile")
+        if( currentUser) navigate("/login")
     },[currentUser, navigate])
 
 
@@ -23,6 +29,8 @@ const handleSignUp = async (e) => {
     e.preventDefault()
     try{
         const res = await createUserWithEmailAndPassword(auth, username, password)
+
+        console.log(res) // remove this after adding the endpoint for firebase to neon
         console.log(res.user)
     } catch(error) {
         console.error(error)
@@ -33,12 +41,40 @@ const handleSignUp = async (e) => {
 const handleLogin = async (e) => {
     e.preventDefault();
     try{
-        await signInWithEmailAndPassword(auth, username, password);
+      let user = await signInWithEmailAndPassword(auth, username, password);
+   console.log(user)
+      //  const user = userCredential.user;
+
+       // Get the firebase JWT token
+       // Store token for API requests
+       setModalShow(null)
+       alert("Login successful")
+
     } catch(error) {
         console.error(error)
         setError("Username and/or Password is incorrect")
     }
 }
+
+const handleLogOut = async () => {
+    const auth = getAuth();
+    try{
+    await signOut(auth)
+    alert("Signed out")
+} catch (error) {
+    console.error("Errorlogging out", error)
+}
+}
+
+const provider = new GoogleAuthProvider();
+const handleGoogleLogin = async(e) => {
+    e.preventDefault();
+    try {
+        await signInWithPopup(auth, provider)
+    } catch (error) {
+        console.error(error)
+    }
+    }
 
 const handleClose = () => {
     setModalShow(null)
@@ -47,6 +83,9 @@ const handleClose = () => {
 
 return(
     <div>
+        <Button className="rounded-pill" onClick={handleGoogleLogin}>
+            <i className="bi bi-google"></i> Sign Up with Google
+          </Button>
         <Button className="rounded-pill" onClick={handleShowSignUp}>
             Create Account
           </Button>
@@ -62,7 +101,7 @@ return(
             variant="outline-primary"
             onClick={handleShowLogin}
           >
-            Sign In
+            Log In
           </Button>
         <Modal
           show={modalShow !== null}
@@ -108,9 +147,18 @@ return(
               <Button className="rounded-pill" type="submit">
                 {modalShow === "signUp" ? "Sign Up" : "Log in"}
               </Button>
+
             </Form>
           </Modal.Body>
         </Modal>
+        <br />
+        <Button
+            className="rounded-pill"
+            variant="outline-primary"
+            onClick={handleLogOut}
+          >
+            Log Out
+          </Button>
 
     </div>
     

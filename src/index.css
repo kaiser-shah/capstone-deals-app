@@ -1,3 +1,11 @@
+html, body, #root {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -52,6 +60,18 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Fill arrow buttons on hover/focus */
+.dealcard-arrow-btn.dealcard-arrow-down:hover, .dealcard-arrow-btn.dealcard-arrow-down:focus {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+  border-color: #0d6efd !important;
+}
+.dealcard-arrow-btn.dealcard-arrow-up:hover, .dealcard-arrow-btn.dealcard-arrow-up:focus {
+  background-color: #dc3545 !important;
+  color: #fff !important;
+  border-color: #dc3545 !important;
 }
 
 @media (prefers-color-scheme: light) {

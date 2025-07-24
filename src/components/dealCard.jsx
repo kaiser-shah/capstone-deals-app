@@ -21,7 +21,7 @@ export default function DealCard({
     <div id="dealcard-root" className="bg-white rounded-4 shadow-sm p-3 mb-2 w-100" style={{ border: '1px solid #eee', overflow: 'visible' }}> 
       {/* Header: Votes and Posted Ago */}
       <div id="dealcard-header" className="d-flex justify-content-between align-items-start mb-2">
-        <div id="dealcard-header-votes" className="d-flex align-items-center me-2">
+        <div id="dealcard-header-votes" className="d-flex align-items-center me-2 border rounded-pill" style={{ padding: '4px' }}>
           <button
             className="btn btn-outline-primary rounded-circle p-2 me-1 dealcard-arrow-btn dealcard-arrow-down"
             title="Downvote"

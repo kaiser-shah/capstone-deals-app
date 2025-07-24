@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { getAuth } from "firebase/auth";
 
+const BACKEND_URL = "http://localhost:3000";
 const DEAL_PLACEHOLDER = "/fallback-deal.png";
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
 export default function DealCard({
+  
   image,
   title,
-  votes,
+  votes: initialVotes,
+  upvotes,
+  downvotes,
   isHot,
   postedAgo,
   merchant,
@@ -15,15 +20,66 @@ export default function DealCard({
   postedBy,
   description,
   comments,
-  dealLink
+  dealLink,
+  price,
+  originalPrice,
+  deal_id,
+  user_vote
 }) {
+  const [votes, setVotes] = useState(initialVotes);
+  const [loading, setLoading] = useState(false);
+  const [userVote, setUserVote] = useState(user_vote); // 'up', 'down', or null
+
+  // Sync with backend prop after refresh or parent update
+  useEffect(() => {
+    setUserVote(user_vote);
+  }, [user_vote]);
+
+  console.log('DealCard render', deal_id)
+
+  async function handleVote(vote_type) {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      const token = user && (await user.getIdToken());
+
+      const res = await fetch(`${BACKEND_URL}/deals/addremove/vote`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
+        body: JSON.stringify({ deal_id, vote_type })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.action === "added") {
+          setVotes(v => vote_type === "up" ? v + 1 : v - 1);
+          setUserVote(vote_type);
+        } else if (data.action === "removed") {
+          setVotes(v => vote_type === "up" ? v - 1 : v + 1);
+          setUserVote(null);
+        } else if (data.action === "updated") {
+          setVotes(v => vote_type === "up" ? v + 2 : v - 2);
+          setUserVote(vote_type);
+        }
+      }
+    } catch (err) {
+      // Optionally show error
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div id="dealcard-root" className="bg-white rounded-4 shadow-sm p-3 mb-2 w-100" style={{ border: '1px solid #eee', overflow: 'visible' }}> 
       {/* Header: Votes and Posted Ago */}
       <div id="dealcard-header" className="d-flex justify-content-between align-items-start mb-2">
         <div id="dealcard-header-votes" className="d-flex align-items-center me-2 border rounded-pill" style={{ padding: '4px' }}>
           <button
-            className="btn btn-outline-primary rounded-circle p-2 me-1 dealcard-arrow-btn dealcard-arrow-down"
+            className={`btn rounded-circle p-2 me-1 dealcard-arrow-btn dealcard-arrow-down ${userVote === 'down' ? 'btn-primary text-white' : 'btn-outline-primary'}`}
             title="Downvote"
             style={{
               width: 30,
@@ -33,12 +89,14 @@ export default function DealCard({
               justifyContent: 'center',
               borderWidth: 2
             }}
+            onClick={() => handleVote('down')}
+            disabled={loading}
           >
             <i className="bi bi-arrow-down" style={{ fontSize: 18 }} />
           </button>
           <div id="dealcard-header-votes-count" className="fw-bold" style={{ color: isHot ? '#e53935' : '#222', fontSize: 15 }}>{votes}&deg;</div>
           <button
-            className="btn btn-outline-danger rounded-circle p-2 ms-1 dealcard-arrow-btn dealcard-arrow-up"
+            className={`btn rounded-circle p-2 ms-1 dealcard-arrow-btn dealcard-arrow-up ${userVote === 'up' ? 'btn-danger text-white' : 'btn-outline-danger'}`}
             title="Upvote"
             style={{
               width: 30,
@@ -48,11 +106,13 @@ export default function DealCard({
               justifyContent: 'center',
               borderWidth: 2
             }}
+            onClick={() => handleVote('up')}
+            disabled={loading}
           >
             <i className="bi bi-arrow-up" style={{ fontSize: 18 }} />
           </button>
         </div>
-        <span className="badge bg-light text-secondary fs-6 fw-normal" style={{ borderRadius: 8, padding: '6px 12px' }}>Posted {postedAgo}</span>
+        <span className="badge bg-light text-secondary fs-6 fw-normal" style={{ borderRadius: 8, padding: '6px 12px' }}>Posted on {postedAgo}</span>
       </div>
       {/* Main Content */}
       <div id="dealcard-main" className="d-flex gap-3">
@@ -84,13 +144,32 @@ export default function DealCard({
                 }
               }}
             />
-            <span className="text-secondary" style={{ fontSize: 13 }}>Posted by {postedBy}</span>
+            <span className="text-secondary" style={{ fontSize: 13 }}>Posted by {postedBy}</span> 
           </div>
           <div id="dealcard-main-description" className="text-secondary mb-2" style={{ fontSize: 13 }}>{description}</div>
+          <div id="dealcard-main-price" className="d-flex align-items-center mb-2">
+            <span style={{ fontSize: 15, color: '#e53935', fontWeight: 600 }}>RM</span>
+            <span className="fw-bold" style={{ fontSize: 20, color: '#e53935', marginRight: 4 }}>
+              {price}
+            </span>
+            {originalPrice && (
+              <>
+                <span style={{ fontSize: 13, color: '#888', marginRight: 2, textDecoration: 'line-through' }}></span>
+                <span className="text-secondary" style={{ fontSize: 15, textDecoration: 'line-through', marginRight: 4 }}>
+                  {originalPrice}
+                </span>
+                {parseFloat(originalPrice) > parseFloat(price) && (
+                  <span style={{ color: 'green', fontWeight: 700, fontSize: 15 }}>
+                    -{Math.round(((originalPrice - price) / originalPrice) * 100)}%
+                  </span>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
       {/* Footer: Comments, Share, Get Deal */}
-      <div id="dealcard-footer" className="d-flex align-items-center justify-content-between mt-3">
+      <div id="dealcard-footer" className="d-flex align-items-center justify-content-between mt-3"> 
         <div id="dealcard-footer-comments" className="d-flex align-items-center gap-3">
           <span id="dealcard-footer-comments-count" className="d-flex align-items-center text-secondary" style={{ fontSize: 15 }}>
             <i className="bi bi-chat-left-text me-1" style={{ fontSize: 18 }} /> {comments}

@@ -1,40 +1,34 @@
-export default function ProfilePage(){
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { getAuth, signOut  } from "firebase/auth";
 
+export default function ProfilePage() {
+  const navigate = useNavigate();
 
-    // In your React app when making API calls
-const token = localStorage.getItem('firebaseToken');
-fetch('/user/profile', {
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-});
-
-
-    const ProfileComponent = () => {
-        const url = "http://localhost:3000"
-        const {currentUser, token} = useContext(AuthContext);
-
-        const fetchProfile = async () => {
-            if (!currentUser || !token) return;
-
-            //use token for backend authentication
-            const response = await fetch(`${url}/user_id`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-            const data = await response.json()
-            return data;
-        };
-        // use currentuser for frontend logic
-
-        if (!currentUser) {
-                return <div>Please log in</div>
-            }
-            return<div>Welcome {currentUser.displayName}</div>
-
-        }
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      navigate("/", { replace: true });
     }
+  }, [navigate]);
+
+  const handleLogOut = async () => {
+    const auth = getAuth();
+    try{
+    await signOut(auth)
+    alert("Signed out")
+} catch (error) {
+    console.error("Errorlogging out", error)
+}
+}
+  // ...rest of your profile page code...
+  return (
+    <div>
+      {/* Profile content here */}
+      <h1>Profile Page</h1>
+      <button onClick={handleLogOut}>Log Out</button>
+    </div>
+  );
+}
 

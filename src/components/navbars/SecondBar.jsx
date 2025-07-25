@@ -10,8 +10,17 @@ const tabs = [
   { label: 'Categories', icon: 'bi-grid' },
 ];
 
-export default function SecondBar() {
-  const [selected, setSelected] = useState(0);
+export default function SecondBar({ selectedTab, onTabSelect, onCategoriesClick }) {
+  const [activeIdx, setActiveIdx] = useState(null);
+
+  function handleTabClick(idx) {
+    setActiveIdx(idx);
+    onTabSelect && onTabSelect(idx);
+    if (tabs[idx].label === 'Categories' && onCategoriesClick) {
+      onCategoriesClick();
+    }
+    setTimeout(() => setActiveIdx(null), 150);
+  }
 
   return (
     <Navbar
@@ -35,13 +44,19 @@ export default function SecondBar() {
           <Nav.Link
             key={tab.label}
             href="#"
-            onClick={() => setSelected(idx)}
-            className={`d-flex align-items-center text-dark fw-medium p-0 position-relative ${selected === idx ? 'active-tab' : ''}`}
-            style={{ fontSize: '11px', background: 'none', border: 'none' }}
+            onClick={e => { e.preventDefault(); handleTabClick(idx); }}
+            className={`d-flex align-items-center text-dark fw-medium p-0 position-relative`}
+            style={{
+              fontSize: '11px',
+              background: activeIdx === idx ? '#eee' : 'none',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 500
+            }}
           >
             <i className={`bi ${tab.icon} me-2`} style={{ color: '#888', fontSize: '1.3rem' }}></i>
             {tab.label}
-            {selected === idx && (
+            {selectedTab === idx && (
               <span
                 style={{
                   position: 'absolute',

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import Top from "../components/navbars/Top";
 import SecondBar from "../components/navbars/SecondBar";
-import Bottom from "../components/navbars/Bottom";
 import DealCard from "../components/dealCard";
 import LoginSignupModal from "../components/LoginSignupModal";
 import { getAuth } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import Top from "../components/navbars/Top";
+import Bottom from "../components/navbars/Bottom";
+import { Modal, Button, ListGroup } from "react-bootstrap";
 
 const DEAL_PLACEHOLDER = "https://via.placeholder.com/90?text=No+Image";
 const AVATAR_PLACEHOLDER = "https://via.placeholder.com/28?text=User";
@@ -45,12 +46,17 @@ function getDomain(url) {
     }
 }
 
-export default function HomePage() {
+export default function HomePage({ requireAuth }) {
     const [deals, setDeals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [selectedTab, setSelectedTab] = useState(0); // 0: Hottest, 1: Trending, 2: All, 3: Categories
+    const [showCategoriesModal, setShowCategoriesModal] = useState(false);
+    const [categories, setCategories] = useState([]); // now array of {category_id, category_name, deals}
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [categoryDeals, setCategoryDeals] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -87,6 +93,24 @@ export default function HomePage() {
         fetchDeals();
     }, []);
 
+    useEffect(() => {
+        if (showCategoriesModal) {
+            async function fetchCategoriesWithDeals() {
+                try {
+                    const res = await fetch("http://localhost:3000/categories-with-deals");
+                    if (res.ok) {
+                        let data = await res.json();
+                        // Move 'Other' to the end
+                        const others = data.filter(c => c.category_name.toLowerCase() === 'other');
+                        const rest = data.filter(c => c.category_name.toLowerCase() !== 'other');
+                        setCategories([...rest, ...others]);
+                    }
+                } catch {}
+            }
+            fetchCategoriesWithDeals();
+        }
+    }, [showCategoriesModal]);
+
     async function fetchProfile() {
         try {
             const auth = getAuth();
@@ -114,10 +138,71 @@ export default function HomePage() {
         navigate('/profile');
     }
 
+    // Sort/filter deals based on selectedTab and selectedCategory
+    let displayedDeals = [...deals];
+    if (selectedTab === 0) {
+        displayedDeals.sort((a, b) => b.net_votes - a.net_votes);
+    } else if (selectedTab === 1) {
+        const now = new Date();
+        displayedDeals = displayedDeals
+            .filter(deal => {
+                const created = new Date(deal.created_at);
+                return (now - created) / (1000 * 60 * 60) <= 6;
+            })
+            .sort((a, b) => b.net_votes - a.net_votes);
+    } else if (selectedTab === 2) {
+        displayedDeals.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (selectedTab === 3) {
+        // Categories: show only deals for selectedCategory
+        if (selectedCategory) {
+            const cat = categories.find(c => c.category_name === selectedCategory);
+            displayedDeals = cat ? [...cat.deals] : [];
+        } else {
+            displayedDeals = [];
+        }
+    }
+
+    const categoryIcons = {
+        "Fashion": "bi-sunglasses", // or "bi-shirt" if available
+        "Home & Living": "bi-house-door",
+        "Electronics": "bi-phone",
+        "Food & Beverage": "bi-cup-straw",
+        "Beauty & Personal Care": "bi-heart",
+        "Pets": "bi-emoji-smile",
+        "Sports & Outdoors": "bi-bicycle",
+        "Other": "bi-three-dots"
+    };
+
+    // Inline CategoriesModal
+    function CategoriesModal({ show, onHide, categories, onSelect, selectedCategory }) {
+        return (
+            <Modal show={show} onHide={onHide} centered animation={true}>
+                <Modal.Body style={{ borderRadius: 16, padding: 24, background: "#fff" }}>
+                    <h5 className="mb-3" style={{ fontWeight: 700 }}>Select a Category</h5>
+                    <ListGroup>
+                        {categories.map(cat => (
+                            <ListGroup.Item
+                                key={cat.category_id}
+                                action
+                                active={selectedCategory === cat.category_name}
+                                onClick={() => { onSelect(cat.category_name); onHide(); }}
+                                className="d-flex align-items-center"
+                                style={{ fontWeight: 500, fontSize: 15, cursor: 'pointer' }}
+                            >
+                                <i className={`bi ${categoryIcons[cat.category_name] || 'bi-tag'} me-2`} style={{ color: '#e53935', fontSize: 18 }}></i>
+                                {cat.category_name}
+                            </ListGroup.Item>
+                        ))}
+                    </ListGroup>
+                </Modal.Body>
+            </Modal>
+        );
+    }
+
     return (
         <>
             <Top />
-            <SecondBar />
+            <SecondBar selectedTab={selectedTab} onTabSelect={setSelectedTab} onCategoriesClick={() => setShowCategoriesModal(true)} />
             <div
                 id="homepage-deals"
                 className="container-fluid px-2"
@@ -129,8 +214,16 @@ export default function HomePage() {
             >
                 {loading && <div>Loading deals...</div>}
                 {error && <div className="text-danger">{error}</div>}
-                {!loading && !error && deals.length === 0 && <div>No deals found.</div>}
-                {!loading && !error && deals.map((deal) => {
+                {!loading && !error && displayedDeals.length === 0 && (
+  <div className="text-center py-8">
+    <h2 className="text-2xl md:text-3xl font-semibold text-gray-600 mb-2">
+      No deals found
+    </h2>
+    <div className="text-lg text-gray-400 font-light">
+      ...yet!
+    </div>
+  </div>
+)}                {!loading && !error && displayedDeals.map((deal) => {
                     // Fix image URLs
                     let imageUrl = deal.imageUrl || DEAL_PLACEHOLDER;
                     if (imageUrl && !imageUrl.startsWith("http")) {
@@ -160,10 +253,18 @@ export default function HomePage() {
                             comments={deal.comment_count || 0}
                             dealLink={deal.deal_url || "#"}
                             user_vote={deal.user_vote}
+                            requireAuth={requireAuth}
                         />
                     );
                 })}
             </div>
+            <CategoriesModal
+                show={showCategoriesModal}
+                onHide={() => setShowCategoriesModal(false)}
+                categories={categories}
+                onSelect={cat => setSelectedCategory(cat)}
+                selectedCategory={selectedCategory}
+            />
             <Bottom
                 onLoginClick={() => setShowLoginModal(true)}
                 isLoggedIn={!!userProfile}

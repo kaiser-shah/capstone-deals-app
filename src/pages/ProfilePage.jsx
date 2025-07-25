@@ -18,6 +18,7 @@ export default function ProfilePage() {
     try{
     await signOut(auth)
     alert("Signed out")
+    navigate("/", { replace: true });
 } catch (error) {
     console.error("Errorlogging out", error)
 }

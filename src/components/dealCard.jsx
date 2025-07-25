@@ -24,7 +24,8 @@ export default function DealCard({
   price,
   originalPrice,
   deal_id,
-  user_vote
+  user_vote,
+  requireAuth
 }) {
   const [votes, setVotes] = useState(initialVotes);
   const [loading, setLoading] = useState(false);
@@ -35,21 +36,23 @@ export default function DealCard({
     setUserVote(user_vote);
   }, [user_vote]);
 
-  console.log('DealCard render', deal_id)
 
   async function handleVote(vote_type) {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      if (requireAuth) requireAuth('vote');
+      return;
+    }
     if (loading) return;
     setLoading(true);
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      const token = user && (await user.getIdToken());
-
+      const token = await user.getIdToken();
       const res = await fetch(`${BACKEND_URL}/deals/addremove/vote`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(token && { "Authorization": `Bearer ${token}` })
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ deal_id, vote_type })
       });
@@ -73,13 +76,18 @@ export default function DealCard({
     }
   }
 
+  // Check if user is logged in
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const isLoggedIn = !!user;
+
   return (
     <div id="dealcard-root" className="bg-white rounded-4 shadow-sm p-3 mb-2 w-100" style={{ border: '1px solid #eee', overflow: 'visible' }}> 
       {/* Header: Votes and Posted Ago */}
       <div id="dealcard-header" className="d-flex justify-content-between align-items-start mb-2">
         <div id="dealcard-header-votes" className="d-flex align-items-center me-2 border rounded-pill" style={{ padding: '4px' }}>
           <button
-            className={`btn rounded-circle p-2 me-1 dealcard-arrow-btn dealcard-arrow-down ${userVote === 'down' ? 'btn-primary text-white' : 'btn-outline-primary'}`}
+            className={`btn rounded-circle p-2 me-1 dealcard-arrow-btn dealcard-arrow-down ${isLoggedIn && userVote === 'down' ? 'btn-primary text-white' : 'btn-outline-primary'}`}
             title="Downvote"
             style={{
               width: 30,
@@ -96,7 +104,7 @@ export default function DealCard({
           </button>
           <div id="dealcard-header-votes-count" className="fw-bold" style={{ color: isHot ? '#e53935' : '#222', fontSize: 15 }}>{votes}&deg;</div>
           <button
-            className={`btn rounded-circle p-2 ms-1 dealcard-arrow-btn dealcard-arrow-up ${userVote === 'up' ? 'btn-danger text-white' : 'btn-outline-danger'}`}
+            className={`btn rounded-circle p-2 ms-1 dealcard-arrow-btn dealcard-arrow-up ${isLoggedIn && userVote === 'up' ? 'btn-danger text-white' : 'btn-outline-danger'}`}
             title="Upvote"
             style={{
               width: 30,
@@ -146,7 +154,7 @@ export default function DealCard({
             />
             <span className="text-secondary" style={{ fontSize: 13 }}>Posted by {postedBy}</span> 
           </div>
-          <div id="dealcard-main-description" className="text-secondary mb-2" style={{ fontSize: 13 }}>{description}</div>
+          <div id="dealcard-main-description" className="text-secondary mb-2" style={{ fontSize: 13, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>{description}</div>
           <div id="dealcard-main-price" className="d-flex align-items-center mb-2">
             <span style={{ fontSize: 15, color: '#e53935', fontWeight: 600 }}>RM</span>
             <span className="fw-bold" style={{ fontSize: 20, color: '#e53935', marginRight: 4 }}>

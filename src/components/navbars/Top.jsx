@@ -4,8 +4,10 @@ import InputGroup from 'react-bootstrap/InputGroup';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import circleLogo from '../../assets/logos/Capstone Temp Logo circle.png';
 import longLogo from '../../assets/logos/Capstone Temp Logo Long.png';
+import { useNavigate } from "react-router-dom";
 
 export default function Top() {
+  const navigate = useNavigate();
   return (
     <Navbar
       className="px-0"
@@ -24,7 +26,7 @@ export default function Top() {
     >
       <div className="container-fluid d-flex align-items-center px-3 position-relative flex-nowrap" style={{ minHeight: 45 }}>
         {/* Logos on the left */}
-        <div className="d-flex align-items-center flex-shrink-0" style={{ zIndex: 2 }}>
+        <div className="d-flex align-items-center flex-shrink-0" style={{ zIndex: 2, cursor: 'pointer' }} onClick={() => navigate("/") }>
           <img src={circleLogo} alt="Circle Logo" height={40} className="me-2" />
           <img src={longLogo} alt="Long Logo" height={40} />
         </div>

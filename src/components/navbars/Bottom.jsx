@@ -11,7 +11,7 @@ const items = [
 
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
-export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl }) {
+export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClick }) {
   const [selected, setSelected] = useState(null);
   const navigate = useNavigate();
   const navRef = useRef(null);
@@ -66,6 +66,12 @@ export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl }) {
               navigate("/profile");
             } else if (item.label === "Log in" && onLoginClick) {
               onLoginClick();
+            } else if (item.label === "Post") {
+              if (isLoggedIn) {
+                onPostClick();
+              } else if (onLoginClick) {
+                onLoginClick();
+              }
             }
           }}
         >

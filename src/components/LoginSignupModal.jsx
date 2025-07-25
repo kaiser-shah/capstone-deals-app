@@ -154,13 +154,13 @@ export default function LoginSignupModal({ show, onClose, onLoginSuccess }) {
           <span style={{ fontWeight: 700, fontSize: 22 }}>Login or Signup</span>
           <i className="bi bi-x-lg" style={{ fontSize: 24, cursor: "pointer" }} onClick={handleClose}></i>
         </div>
-        <div className="mb-2" style={{ color: '#888' }}>Join the world's largest deal community today!</div>
+        <div className="mb-2" style={{ color: '#888' }}>Join now and get the best deals today!</div>
         <Form onSubmit={step === "email" ? handleContinue : step === "login" ? handleLogin : handleSignup}>
           <Form.Group className="mb-3">
             <Form.Label>Email</Form.Label>
             <Form.Control
               type="email"
-              placeholder="john@smith.com"
+              placeholder="example@email.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
               disabled={step !== "email"}
@@ -181,7 +181,7 @@ export default function LoginSignupModal({ show, onClose, onLoginSuccess }) {
           )}
           {step !== "email" && (
             <Form.Group className="mb-3">
-              <Form.Label>Password</Form.Label>
+              {/* <Form.Label>Password</Form.Label> */}
               <Form.Control
                 type="password"
                 placeholder="Enter password"

@@ -82,7 +82,7 @@ function AppLayout() {
       <div style={{ minHeight: "calc(100vh - 130px)" }}>
         <Routes>
           <Route path="/" element={<HomePage requireAuth={requireAuth} />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<ProfilePage setUserProfile={setUserProfile} />} />
           <Route path="/deal" element={<DealPage />} />
           <Route path="/login" element={<AuthPage />} />
           <Route path="*" element={<ErrorPage />} />  

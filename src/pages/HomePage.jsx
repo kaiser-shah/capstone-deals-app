@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Top from "../components/navbars/Top";
 import Bottom from "../components/navbars/Bottom";
 import { Modal, Button, ListGroup } from "react-bootstrap";
+import CategoriesModal from "../components/CategoriesModal";
 
 const DEAL_PLACEHOLDER = "https://via.placeholder.com/90?text=No+Image";
 const AVATAR_PLACEHOLDER = "https://via.placeholder.com/28?text=User";
@@ -173,32 +174,6 @@ export default function HomePage({ requireAuth }) {
         "Other": "bi-three-dots"
     };
 
-    // Inline CategoriesModal
-    function CategoriesModal({ show, onHide, categories, onSelect, selectedCategory }) {
-        return (
-            <Modal show={show} onHide={onHide} centered animation={true}>
-                <Modal.Body style={{ borderRadius: 16, padding: 24, background: "#fff" }}>
-                    <h5 className="mb-3" style={{ fontWeight: 700 }}>Select a Category</h5>
-                    <ListGroup>
-                        {categories.map(cat => (
-                            <ListGroup.Item
-                                key={cat.category_id}
-                                action
-                                active={selectedCategory === cat.category_name}
-                                onClick={() => { onSelect(cat.category_name); onHide(); }}
-                                className="d-flex align-items-center"
-                                style={{ fontWeight: 500, fontSize: 15, cursor: 'pointer' }}
-                            >
-                                <i className={`bi ${categoryIcons[cat.category_name] || 'bi-tag'} me-2`} style={{ color: '#e53935', fontSize: 18 }}></i>
-                                {cat.category_name}
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </Modal.Body>
-            </Modal>
-        );
-    }
-
     return (
         <>
             <Top />
@@ -212,7 +187,7 @@ export default function HomePage({ requireAuth }) {
  // adjust to match your footer height
                 }}
             >
-                {loading && <div>Loading deals...</div>}
+                {loading && <div className="text-center py-8">Loading deals...</div>}
                 {error && <div className="text-danger">{error}</div>}
                 {!loading && !error && displayedDeals.length === 0 && (
   <div className="text-center py-8">
@@ -264,6 +239,7 @@ export default function HomePage({ requireAuth }) {
                 categories={categories}
                 onSelect={cat => setSelectedCategory(cat)}
                 selectedCategory={selectedCategory}
+                categoryIcons={categoryIcons}
             />
             <Bottom
                 onLoginClick={() => setShowLoginModal(true)}

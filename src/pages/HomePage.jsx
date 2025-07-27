@@ -183,7 +183,7 @@ export default function HomePage({ requireAuth }) {
                 className="container-fluid px-2"
                 style={{
                     paddingTop: 130,   // adjust to match your nav height
-                    paddingBottom: 80,
+                    paddingBottom: 60,
  // adjust to match your footer height
                 }}
             >

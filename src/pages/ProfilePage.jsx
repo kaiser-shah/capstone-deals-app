@@ -191,7 +191,7 @@ export default function ProfilePage({ setUserProfile }) {
 
   return (
     <>
-      <div className="container" style={{ maxWidth: 500, paddingTop: 100, paddingBottom: 55 }}>
+      <div className="container" style={{ maxWidth: 900, paddingTop: 100, paddingBottom: 55 }}>
         <div className="d-flex flex-column align-items-center">
           <div className="position-relative mb-2">
             <Image
@@ -201,8 +201,8 @@ export default function ProfilePage({ setUserProfile }) {
             />
             <Button
               variant="light"
-              className="position-absolute bottom-0 end-0 p-1 border"
-              style={{ borderRadius: "50%", background: "#fff" }}
+              className="position-absolute bottom-0 end-0 "
+              style={{ borderRadius: "50%", background: "#fff", border: "1px solid #e53935", height: 35, width: 35, padding: 0 }}
               onClick={() => fileInputRef.current.click()}
               disabled={avatarUploading}
             >
@@ -256,7 +256,7 @@ export default function ProfilePage({ setUserProfile }) {
         <ListGroup>
           {deals.map(deal => (
             <ListGroup.Item key={deal.deal_id} className="p-2 mb-2 rounded-3 shadow-sm border-0" style={{ background: '#fafafa', position: 'relative', filter: deal.is_active === false ? 'grayscale(1) opacity(0.6)' : 'none' }}>
-              <div className="d-flex align-items-center gap-3 position-relative">
+              <div className="d-flex align-items-center gap-2 position-relative">
                 {deal.is_active === false && (
                   <div style={{ position: 'absolute', top: -10, left: 0, right: 0, textAlign: 'center', color: '#e53935', fontWeight: 600, fontSize: 13 }}>
                     Removed
@@ -268,13 +268,13 @@ export default function ProfilePage({ setUserProfile }) {
                 <img src={deal.primary_image_url || "/fallback-deal.png"} alt={deal.title} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
                 <div className="flex-grow-1">
                   <div className="fw-bold" style={{ fontSize: 15 }}>{deal.title}</div>
-                  <div className="text-secondary" style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>{deal.description}</div>
+                  <div className="text-secondary" style={{ fontSize: 13,  overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{deal.description}</div>
                   <div className="d-flex align-items-center gap-2 mt-1">
                     <span className="fw-bold text-danger" style={{ fontSize: 15 }}>RM{deal.price}</span>
                     {deal.original_price && <span className="text-secondary" style={{ fontSize: 13, textDecoration: 'line-through' }}>RM{deal.original_price}</span>}
                   </div>
                 </div>
-                <div className="d-flex flex-column align-items-center ms-2" style={{ minWidth: 80, marginTop: 20 }}>
+                <div className="d-flex flex-column align-items-center ms-0" style={{ minWidth: 80, marginTop: 20 }}>
                   <a href={deal.deal_url} target="_blank" rel="noopener noreferrer" className="btn btn-danger btn-sm mb-2" style={{ fontSize: 15 }}>
                   Link*
                   </a>

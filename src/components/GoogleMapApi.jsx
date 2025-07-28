@@ -90,7 +90,7 @@ export default function MapComponent() {
         const infoWindow = new window.google.maps.InfoWindow({
             content: `
                 <div style="padding: 10px; min-width: 220px;">
-                    <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">Sigma School</h3>
+                    <h3 style="margin: 0 0 1px 0; color: #333; font-size: 16px;">Sigma School</h3>
                     <p style="margin: 0 0 15px 0; color: #666; line-height: 1.4;">
                         B-1-11, IOI Boulevard, <br> 
                         Jalan Kenari 5, 47100 <br>
@@ -105,7 +105,7 @@ export default function MapComponent() {
                                display: inline-block;
                                background-color: #1a73e8;
                                color: white;
-                               padding: 8px 12px;
+                               padding: 2px 2px;
                                text-decoration: none;
                                border-radius: 4px;
                                font-size: 13px;
@@ -122,12 +122,12 @@ export default function MapComponent() {
                                display: inline-block;
                                background-color: #34a853;
                                color: white;
-                               padding: 8px 12px;
                                text-decoration: none;
                                border-radius: 4px;
                                font-size: 13px;
                                text-align: center;
                                font-weight: 500;
+                               margin-right: 15px;
                            ">
                             🧭 Get Directions
                         </a>
@@ -144,30 +144,37 @@ export default function MapComponent() {
     // Show loading state
     if (isLoading) {
         return (
-            <div style={{ 
-                height: '400px', 
-                width: '80vw', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-            }}>
-                <p>Loading map...</p>
+            <div className="container-fluid">
+                <div className="">
+                    <div className="col-12 d-flex justify-content-center align-items-center">
+                        <div className="text-center">
+                            <div className="spinner-border text-primary mb-3" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                            <p className="text-muted">Loading map...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div 
-            ref={mapRef} 
-            style={{ 
-                height: '400px', 
-                width: '80vw',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-            }} 
-        />
+        <div className="container-fluid">
+            <div className="row">
+                <div className="col-12 d-flex justify-content-center align-items-center">
+                    <div className="col-12 col-md-10 col-lg-8">
+                        <div
+                            ref={mapRef} 
+                            className="border rounded shadow-sm"
+                            style={{ 
+                                height: '200px',
+                                width: '100%'
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

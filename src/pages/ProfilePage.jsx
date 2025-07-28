@@ -252,7 +252,7 @@ export default function ProfilePage({ setUserProfile }) {
             Log Out
           </Button>
         </div>
-        <h5 className="mb-3">Your Deals</h5>
+        <h5 className="mb-3">{profile.username}'s Deals</h5>
         <ListGroup>
           {deals.map(deal => (
             <ListGroup.Item

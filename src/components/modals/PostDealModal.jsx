@@ -34,7 +34,8 @@ export default function PostDealModal({ show, onClose, onDealPosted, initialData
 
   // Pre-populate form fields in edit mode
   useEffect(() => {
-    if (isEdit && initialData && show) {
+    if (!show) return;
+    if (isEdit && initialData) {
       setForm({
         deal_url: initialData.deal_url || "",
         title: initialData.title || "",
@@ -45,7 +46,7 @@ export default function PostDealModal({ show, onClose, onDealPosted, initialData
         category_name: initialData.category_name || ""
       });
       setExistingImages(initialData.images || []);
-    } else if (!isEdit && show) {
+    } else if (!isEdit) {
       setForm({
         deal_url: "",
         title: "",
@@ -57,7 +58,7 @@ export default function PostDealModal({ show, onClose, onDealPosted, initialData
       });
       setExistingImages([]);
     }
-  }, [isEdit, initialData, show]);
+  }, [show, isEdit, initialData?.deal_id]);
 
   function handleChange(e) {
     const { name, value, files } = e.target;

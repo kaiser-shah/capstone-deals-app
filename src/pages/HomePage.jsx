@@ -38,7 +38,7 @@ function getHoursAgo(created_at) {
     }
 }
 
-function getDomain(url) {
+export function getDomain(url) {
     try {
         const { hostname } = new URL(url);
         return hostname.replace('www.', '').split('.')[0];

@@ -255,7 +255,12 @@ export default function ProfilePage({ setUserProfile }) {
         <h5 className="mb-3">Your Deals</h5>
         <ListGroup>
           {deals.map(deal => (
-            <ListGroup.Item key={deal.deal_id} className="p-2 mb-2 rounded-3 shadow-sm border-0" style={{ background: '#fafafa', position: 'relative', filter: deal.is_active === false ? 'grayscale(1) opacity(0.6)' : 'none' }}>
+            <ListGroup.Item
+              key={deal.deal_id}
+              className="p-2 mb-2 rounded-3 shadow-sm border-0"
+              style={{ background: '#fafafa', position: 'relative', filter: deal.is_active === false ? 'grayscale(1) opacity(0.6)' : 'none', cursor: 'pointer' }}
+              onClick={() => navigate(`/deal/${deal.deal_id}`)}
+            >
               <div className="d-flex align-items-center gap-2 position-relative">
                 {deal.is_active === false && (
                   <div style={{ position: 'absolute', top: -10, left: 0, right: 0, textAlign: 'center', color: '#e53935', fontWeight: 600, fontSize: 13 }}>
@@ -275,15 +280,31 @@ export default function ProfilePage({ setUserProfile }) {
                   </div>
                 </div>
                 <div className="d-flex flex-column align-items-center ms-0" style={{ minWidth: 80, marginTop: 20 }}>
-                  <a href={deal.deal_url} target="_blank" rel="noopener noreferrer" className="btn btn-danger btn-sm mb-2" style={{ fontSize: 15 }}>
-                  Link*
+                  <a
+                    href={deal.deal_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-danger btn-sm mb-2"
+                    style={{ fontSize: 15 }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    Link*
                   </a>
                   {(deal.is_active === false) ? (
-                    <Button variant="outline-secondary" size="sm" onClick={() => handleRemoveDeal(deal, true)} disabled={removing}>
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={e => { e.stopPropagation(); handleRemoveDeal(deal, true); }}
+                      disabled={removing}
+                    >
                       Undo
                     </Button>
                   ) : (
-                    <Button variant="outline-danger" size="sm" onClick={() => { setDealToRemove(deal); setShowRemoveModal(true); }}>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={e => { e.stopPropagation(); setDealToRemove(deal); setShowRemoveModal(true); }}
+                    >
                       Remove
                     </Button>
                   )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { getAuth } from "firebase/auth";
 
@@ -20,7 +21,7 @@ export default function DealCard({
   postedBy,
   description,
   comments,
-  dealLink,
+  dealLink, //
   price,
   originalPrice,
   deal_id,
@@ -80,9 +81,25 @@ export default function DealCard({
   const auth = getAuth();
   const user = auth.currentUser;
   const isLoggedIn = !!user;
+  const navigate = useNavigate();
+
+  // Handler for card click
+  function handleCardClick() {
+    navigate(`/deal/${deal_id}`);
+  }
+
+  // Helper to stop propagation
+  function stopPropagation(e) {
+    e.stopPropagation();
+  }
 
   return (
-    <div id="dealcard-root" className="bg-white rounded-4 shadow-sm p-3 mb-2 w-100" style={{ border: '1px solid #eee', overflow: 'visible' }}> 
+    <div
+      id="dealcard-root"
+      className="bg-white rounded-4 shadow-sm p-3 mb-2 w-100"
+      style={{ border: '1px solid #eee', overflow: 'visible', cursor: 'pointer' }}
+      onClick={handleCardClick}
+    >
       {/* Header: Votes and Posted Ago */}
       <div id="dealcard-header" className="d-flex justify-content-between align-items-start mb-2">
         <div id="dealcard-header-votes" className="d-flex align-items-center me-2 border rounded-pill" style={{ padding: '4px' }}>
@@ -97,7 +114,7 @@ export default function DealCard({
               justifyContent: 'center',
               borderWidth: 2
             }}
-            onClick={() => handleVote('down')}
+            onClick={e => { stopPropagation(e); handleVote('down'); }}
             disabled={loading}
           >
             <i className="bi bi-arrow-down" style={{ fontSize: 18 }} />
@@ -114,7 +131,7 @@ export default function DealCard({
               justifyContent: 'center',
               borderWidth: 2
             }}
-            onClick={() => handleVote('up')}
+            onClick={e => { stopPropagation(e); handleVote('up'); }}
             disabled={loading}
           >
             <i className="bi bi-arrow-up" style={{ fontSize: 18 }} />
@@ -186,7 +203,14 @@ export default function DealCard({
             <i className="bi bi-share me-1" style={{ fontSize: 18 }} /> Share
           </span>
         </div>
-        <a href={dealLink} target="_blank" rel="noopener noreferrer" className="btn btn-danger rounded-pill fw-bold d-flex align-items-center" style={{ fontSize: 16 }}>
+        <a
+          href={dealLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-danger rounded-pill fw-bold d-flex align-items-center"
+          style={{ fontSize: 16 }}
+          onClick={stopPropagation}
+        >
           Get deal* <i className="bi bi-box-arrow-up-right ms-2" style={{ fontSize: 18 }} />
         </a>
       </div>

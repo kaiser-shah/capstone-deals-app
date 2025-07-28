@@ -4,6 +4,7 @@ import { Spinner } from "react-bootstrap";
 import PostDealModal from "../components/PostDealModal";
 import { Modal, Button } from "react-bootstrap";
 import DealCard from "../components/dealCard";
+import { getDomain } from "./HomePage";
 
 export default function DealPage() {
   const { deal_id } = useParams();
@@ -100,7 +101,15 @@ export default function DealPage() {
   console.log('Deal object:', deal);
 
   return (
-    <div className="container" style={{ maxWidth: 600, paddingTop: 90, minHeight: '100vh', paddingBottom: 40, overflow: 'visible', filter: deal.is_active === false ? 'grayscale(1) opacity(0.6)' : 'none' }}>
+    <div className="container" style={{ maxWidth: 600, paddingTop: 90, minHeight: '100vh', paddingBottom: 40, overflow: 'visible', filter: deal.is_active === false ? 'grayscale(1) opacity(0.6)' : 'none', position: 'relative' }}>
+      {/* Inactive badge */}
+      {deal.is_active === false && (
+        <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
+          <span style={{ background: '#fff', color: '#e53935', border: '2px solid #e53935', borderRadius: 8, padding: '6px 16px', fontWeight: 700, fontSize: 17, boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+            Inactive
+          </span>
+        </div>
+      )}
       {/* Breadcrumb Navigation */}
       <nav aria-label="breadcrumb" className="mb-3">
         <ol className="breadcrumb align-items-center" style={{ background: 'none', padding: 0, margin: 0 }}>
@@ -130,7 +139,7 @@ export default function DealPage() {
         title={deal.title}
         price={deal.price}
         originalPrice={deal.original_price}
-        merchant={deal.merchant || deal.company || deal.store || deal.category_name || ''}
+        merchant={getDomain(deal.deal_url)}
         dealUrl={deal.deal_url}
       />
 
@@ -189,7 +198,7 @@ function ImageGallery({ images }) {
 
   return (
     <div className="mb-4">
-      <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', borderRadius: 16, background: '#000', position: 'relative' }}>
+      <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', borderRadius: 16, position: 'relative' }}>
         <div style={{ display: 'flex', gap: 0 }}>
           {imgs.map((img, idx) => (
             <img
@@ -414,7 +423,7 @@ function DealDetailsSection({ deal }) {
   const accountCreated = deal.user_created_at ? formatDatePosted(deal.user_created_at) : (deal.account_created_at ? formatDatePosted(deal.account_created_at) : "--");
   const totalLikes = deal.user_total_likes || 0;
   const description = deal.description || "";
-  const company = deal.merchant || deal.company || deal.store || deal.category_name || "";
+  const company = getDomain(deal.deal_url)
   const dealUrl = deal.deal_url;
   const lastUpdated = deal.updated_at ? formatDatePosted(deal.updated_at) : (deal.created_at ? formatDatePosted(deal.created_at) : "--");
 

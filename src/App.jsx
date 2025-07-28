@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, BrowserRouter, useNavigate } from "react-router-dom";
 import Top from "./components/navbars/Top";
 import Bottom from "./components/navbars/Bottom";
-import LoginSignupModal from "./components/LoginSignupModal";
+import LoginSignupModal from "./components/modals/LoginSignupModal";
 import HomePage from "./pages/HomePage";
+import AboutUs from "./pages/AboutUs";
 import ProfilePage from "./pages/ProfilePage";
 import DealPage from "./pages/DealPage";
 import AuthPage from "./pages/AuthPage";
 import ErrorPage from "./pages/ErrorPage";
-import PostDealModal from "./components/PostDealModal";
+import PostDealModal from "./components/modals/PostDealModal";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 function AppLayout() {
@@ -85,6 +86,7 @@ function AppLayout() {
           <Route path="/profile" element={<ProfilePage setUserProfile={setUserProfile} />} />
           <Route path="/deal/:deal_id" element={<DealPage />} />
           <Route path="/login" element={<AuthPage />} />
+          <Route path="/about" element={<AboutUs />} />
           <Route path="*" element={<ErrorPage />} />  
         </Routes>
       </div>

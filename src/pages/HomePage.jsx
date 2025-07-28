@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import SecondBar from "../components/navbars/SecondBar";
 import DealCard from "../components/dealCard";
-import LoginSignupModal from "../components/LoginSignupModal";
+import LoginSignupModal from "../components/modals/LoginSignupModal";
 import { getAuth } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Top from "../components/navbars/Top";
 import Bottom from "../components/navbars/Bottom";
 import { Modal, Button, ListGroup } from "react-bootstrap";
-import CategoriesModal from "../components/CategoriesModal";
+import CategoriesModal from "../components/modals/CategoriesModal";
 
 const DEAL_PLACEHOLDER = "https://via.placeholder.com/90?text=No+Image";
 const AVATAR_PLACEHOLDER = "https://via.placeholder.com/28?text=User";

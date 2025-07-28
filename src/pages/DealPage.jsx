@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
-import PostDealModal from "../components/PostDealModal";
+import PostDealModal from "../components/modals/PostDealModal";
 import { Modal, Button } from "react-bootstrap";
 import DealCard from "../components/dealCard";
 import { getDomain } from "./HomePage";

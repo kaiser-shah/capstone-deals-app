@@ -11,7 +11,8 @@ const items = [
 
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
-export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClick }) {
+export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClick, onMenuClick, onNotificationClick }) {
+  console.log("Bottom props:", { onLoginClick, isLoggedIn, avatarUrl, onPostClick, onMenuClick })
   const [selected, setSelected] = useState(null);
   const navigate = useNavigate();
   const navRef = useRef(null);
@@ -49,47 +50,88 @@ export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClic
       }}
     >
       {items.map((item, idx) => (
-        <div
-          key={item.label}
-          className="d-flex flex-column align-items-center justify-content-center"
-          style={{
-            cursor: "pointer",
-            minWidth: 60,
-            borderRadius: 16,
-            background: selected === idx ? "#eee" : "transparent",
-            transition: "background 0.2s"
-          }}
-          onClick={() => {
-            setSelected(idx);
-            setTimeout(() => setSelected(null), 100); // Remove highlight right after click
-            if (item.label === "Log in" && isLoggedIn) {
-              navigate("/profile");
-            } else if (item.label === "Log in" && onLoginClick) {
-              onLoginClick();
-            } else if (item.label === "Post") {
-              if (isLoggedIn) {
-                onPostClick();
-              } else if (onLoginClick) {
+        item.label === "Menu" ? (
+          <button
+            key={item.label}
+            style={{
+              cursor: "pointer",
+              minWidth: 60,
+              borderRadius: 16,
+              background: selected === idx ? "#eee" : "transparent",
+              transition: "background 0.2s",
+              border: "none"
+            }}
+            onClick={() => {
+              setSelected(idx);
+              setTimeout(() => setSelected(null), 100);
+              console.log("Menu button clicked!");
+              if (typeof onMenuClick === "function") onMenuClick();
+            }}
+          >
+            <i className={`bi ${item.icon}`} style={{ fontSize: 28, color: "#111" }} />
+          </button>
+        ) : item.label === "Alerts" ? (
+          <button
+            key={item.label}
+            style={{
+              cursor: "pointer",
+              minWidth: 60,
+              borderRadius: 16,
+              background: selected === idx ? "#eee" : "transparent",
+              transition: "background 0.2s",
+              border: "none"
+            }}
+            onClick={() => {
+              setSelected(idx);
+              setTimeout(() => setSelected(null), 100);
+              if (typeof onNotificationClick === "function") onNotificationClick();
+            }}
+          >
+            <i className={`bi ${item.icon}`} style={{ fontSize: 28, color: "#111" }} />
+          </button>
+        ) : (
+          <div
+            key={item.label}
+            className="d-flex flex-column align-items-center justify-content-center"
+            style={{
+              cursor: "pointer",
+              minWidth: 60,
+              borderRadius: 16,
+              background: selected === idx ? "#eee" : "transparent",
+              transition: "background 0.2s"
+            }}
+            onClick={() => {
+              setSelected(idx);
+              setTimeout(() => setSelected(null), 100); // Remove highlight right after click
+              if (item.label === "Log in" && isLoggedIn) {
+                navigate("/profile");
+              } else if (item.label === "Log in" && onLoginClick) {
                 onLoginClick();
+              } else if (item.label === "Post") {
+                if (isLoggedIn) {
+                  onPostClick();
+                } else if (onLoginClick) {
+                  onLoginClick();
+                }
               }
-            }
-          }}
-        >
-          {item.label === "Log in" && isLoggedIn ? (
-            <img
-              src={avatarUrl || AVATAR_PLACEHOLDER}
-              alt="User Avatar"
-              style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover", verticalAlign: "middle", marginTop: -6 }}
-            />
-          ) : (
-            <>
-              <i
-                className={`bi ${item.icon}`}
-                style={{ fontSize: 28, color: "#111" }}
-              ></i>
-            </>
-          )}
-        </div>
+            }}
+          >
+            {item.label === "Log in" && isLoggedIn ? (
+              <img
+                src={avatarUrl || AVATAR_PLACEHOLDER}
+                alt="User Avatar"
+                style={{ width: 35, height: 35, borderRadius: "50%", objectFit: "cover", verticalAlign: "middle", marginTop: -6 }}
+              />
+            ) : (
+              <>
+                <i
+                  className={`bi ${item.icon}`}
+                  style={{ fontSize: 28, color: "#111" }}
+                ></i>
+              </>
+            )}
+          </div>
+        )
       ))}
     </nav>
   );

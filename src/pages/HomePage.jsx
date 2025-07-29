@@ -5,7 +5,6 @@ import LoginSignupModal from "../components/modals/LoginSignupModal";
 import { getAuth } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Top from "../components/navbars/Top";
-import Bottom from "../components/navbars/Bottom";
 import { Modal, Button, ListGroup } from "react-bootstrap";
 import CategoriesModal from "../components/modals/CategoriesModal";
 
@@ -58,6 +57,7 @@ export default function HomePage({ requireAuth }) {
     const [categories, setCategories] = useState([]); // now array of {category_id, category_name, deals}
     const [selectedCategory, setSelectedCategory] = useState("");
     const [categoryDeals, setCategoryDeals] = useState([]);
+    const [showSideBar, setShowSideBar] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -174,6 +174,7 @@ export default function HomePage({ requireAuth }) {
         "Other": "bi-three-dots"
     };
 
+    console.log(showSideBar)
     return (
         <>
             <Top />
@@ -240,11 +241,6 @@ export default function HomePage({ requireAuth }) {
                 onSelect={cat => setSelectedCategory(cat)}
                 selectedCategory={selectedCategory}
                 categoryIcons={categoryIcons}
-            />
-            <Bottom
-                onLoginClick={() => setShowLoginModal(true)}
-                isLoggedIn={!!userProfile}
-                avatarUrl={userProfile && userProfile.profile_pic}
             />
             <LoginSignupModal
                 show={showLoginModal}

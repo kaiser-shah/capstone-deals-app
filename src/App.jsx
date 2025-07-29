@@ -10,6 +10,8 @@ import DealPage from "./pages/DealPage";
 import AuthPage from "./pages/AuthPage";
 import ErrorPage from "./pages/ErrorPage";
 import PostDealModal from "./components/modals/PostDealModal";
+import SideBarModal from "./components/modals/SideBarModal";
+import NotificationModal from "./components/modals/NotificationModal";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 function AppLayout() {
@@ -19,6 +21,8 @@ function AppLayout() {
   const [authReady, setAuthReady] = useState(false);
   const [loginReason, setLoginReason] = useState(null); // 'vote', 'post', or null
   const navigate = useNavigate();
+  const [showSideBar, setShowSideBar] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -95,7 +99,11 @@ function AppLayout() {
         isLoggedIn={!!userProfile}
         avatarUrl={userProfile && userProfile.profile_pic}
         onPostClick={handlePostClick}
+        onMenuClick={() => setShowSideBar(true)}
+        onNotificationClick={() => setShowNotification(true)}
       />
+      <SideBarModal show={showSideBar} onClose={() => setShowSideBar(false)} />
+      <NotificationModal show={showNotification} onClose={() => setShowNotification(false)} />
       <LoginSignupModal
         show={showLoginModal}
         onClose={() => setShowLoginModal(false)}

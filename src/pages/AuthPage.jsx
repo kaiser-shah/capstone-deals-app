@@ -29,9 +29,7 @@ const handleSignUp = async (e) => {
     e.preventDefault()
     try{
         const res = await createUserWithEmailAndPassword(auth, username, password)
-
-        console.log(res) // remove this after adding the endpoint for firebase to neon
-        console.log(res.user)
+        console.log(res)
     } catch(error) {
         console.error(error)
 

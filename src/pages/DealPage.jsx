@@ -97,9 +97,6 @@ export default function DealPage() {
   if (error) return <div className="text-danger text-center py-5">{error}</div>;
   if (!deal) return null;
 
-  // Debug: log deal object to check category property
-  console.log('Deal object:', deal);
-
   return (
     <div className="container" style={{ maxWidth: 600, paddingTop: 90, minHeight: '100vh', paddingBottom: 40, overflow: 'visible', filter: deal.is_active === false ? 'grayscale(1) opacity(0.6)' : 'none', position: 'relative' }}>
       {/* Inactive badge */}

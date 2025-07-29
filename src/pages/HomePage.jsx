@@ -174,7 +174,6 @@ export default function HomePage({ requireAuth }) {
         "Other": "bi-three-dots"
     };
 
-    console.log(showSideBar)
     return (
         <>
             <Top />

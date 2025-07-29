@@ -12,7 +12,6 @@ const items = [
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
 export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClick, onMenuClick, onNotificationClick }) {
-  console.log("Bottom props:", { onLoginClick, isLoggedIn, avatarUrl, onPostClick, onMenuClick })
   const [selected, setSelected] = useState(null);
   const navigate = useNavigate();
   const navRef = useRef(null);
@@ -64,7 +63,6 @@ export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClic
             onClick={() => {
               setSelected(idx);
               setTimeout(() => setSelected(null), 100);
-              console.log("Menu button clicked!");
               if (typeof onMenuClick === "function") onMenuClick();
             }}
           >

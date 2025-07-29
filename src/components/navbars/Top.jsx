@@ -2,8 +2,8 @@ import Navbar from 'react-bootstrap/Navbar';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import circleLogo from '../../assets/logos/Capstone-Temp-Logo-circle.png';
-import longLogo from '../../assets/logos/Capstone-Temp-Logo-Long.png';
+import circleLogo from '/Users/kaisershah/Documents/Sigma/module-assessments/Capstone/capstone-deals-app/public/logos/Capstone-Temp-Logo-Circle.png';
+import longLogo from '/Users/kaisershah/Documents/Sigma/module-assessments/Capstone/capstone-deals-app/public/logos/Capstone-Temp-Logo-Long.png';
 import { useNavigate } from "react-router-dom";
 
 export default function Top() {

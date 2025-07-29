@@ -80,7 +80,7 @@ export default function DealPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`https://capstone-deals-app-wmbj.vercel.app/${deal_id}/full`);
+        const res = await fetch(`https://capstone-deals-app-wmbj.vercel.app/deals${deal_id}/full`);
         if (!res.ok) throw new Error("Failed to fetch deal");
         const data = await res.json();
         setDeal(data);

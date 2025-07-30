@@ -4,7 +4,7 @@ import GoogleMapApi from '../components/GoogleMapApi';
 
 export default function AboutUs() {
 
-const profilePic = ('../public/Me_B&W_circle.jpeg');
+const profilePic = '/Me_B&W_circle.jpeg';
     return (
         <div>
             <h2 style={{ marginTop: '75px', marginLeft: '30px' }}>About Me (Not “Us”... yet 😅)</h2>

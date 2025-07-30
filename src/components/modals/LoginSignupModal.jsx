@@ -3,7 +3,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
-const BACKEND_URL = "https://capstone-deals-app-wmbj.vercel.app";
+const BACKEND_URL = "http://localhost:3000";
 
 export default function LoginSignupModal({ show, onClose, onLoginSuccess }) {
   const [step, setStep] = useState("email"); // 'email', 'login', 'signup'

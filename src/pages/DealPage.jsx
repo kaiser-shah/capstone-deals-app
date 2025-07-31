@@ -24,7 +24,7 @@ export default function DealPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`http://localhost:3000/deals/${deal_id}/full`);
+        const res = await fetch(`http://capstone-deals-app-endpoints.vercel.app/deals/${deal_id}/full`);
         if (!res.ok) throw new Error("Failed to fetch deal");
         const data = await res.json();
         setDeal(data);
@@ -43,7 +43,7 @@ export default function DealPage() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/deals/${deal.deal_id}`, {
+      const res = await fetch(`http://capstone-deals-app-endpoints.vercel.app/deals/${deal.deal_id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -63,7 +63,7 @@ export default function DealPage() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/deals/${deal.deal_id}/reactivate`, {
+      const res = await fetch(`http://capstone-deals-app-endpoints.vercel.app/deals/${deal.deal_id}/reactivate`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -80,7 +80,7 @@ export default function DealPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`http://localhost:3000/deals${deal_id}/full`);
+        const res = await fetch(`http://capstone-deals-app-endpoints.vercel.app/deals${deal_id}/full`);
         if (!res.ok) throw new Error("Failed to fetch deal");
         const data = await res.json();
         setDeal(data);
@@ -269,7 +269,7 @@ function VotingSection({ deal_id, initialVotes, userVote: initialUserVote }) {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:3000/deals/addremove/vote`, {
+      const res = await fetch(`http://capstone-deals-app-endpoints.vercel.app/deals/addremove/vote`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -429,7 +429,7 @@ function DealDetailsSection({ deal }) {
     async function fetchUserDealsCount() {
       if (deal.user_id && (!deal.user_total_deals || deal.user_total_deals === 0)) {
         try {
-          const res = await fetch(`http://localhost:3000/deals/user/${deal.user_id}`);
+          const res = await fetch(`http://capstone-deals-app-endpoints.vercel.app/deals/user/${deal.user_id}`);
           if (res.ok) {
             const deals = await res.json();
             setTotalDeals(deals.length);
@@ -496,7 +496,7 @@ function RelatedDealsSection({ deal }) {
     async function fetchRelated() {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:3000/categories-with-deals");
+        const res = await fetch("http://capstone-deals-app-endpoints.vercel.app/categories-with-deals");
         if (res.ok) {
           const categories = await res.json();
           const cat = categories.find(c => c.category_name === deal.category_name);

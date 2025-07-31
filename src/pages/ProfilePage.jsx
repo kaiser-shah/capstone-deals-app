@@ -4,7 +4,7 @@ import { getAuth, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { Button, Form, Modal, Image, Row, Col, ListGroup, Spinner, InputGroup } from "react-bootstrap";
 import { AuthContext } from "../components/AuthProvider";
 
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "http://capstone-deals-app-endpoints.vercel.app";
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
 export default function ProfilePage({ setUserProfile }) {

@@ -40,7 +40,7 @@ function AppLayout() {
   async function fetchProfile(user) {
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:3000/user/profile", {
+      const res = await fetch("http://capstone-deals-app-endpoints.vercel.app/user/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;

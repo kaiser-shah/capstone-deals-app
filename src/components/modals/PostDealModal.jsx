@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, FloatingLabel } from "react-bootstrap";
 import { getAuth } from "firebase/auth";
 
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "http://capstone-deals-app-endpoints.vercel.app";
 
 export default function PostDealModal({ show, onClose, onDealPosted, initialData = {}, isEdit = false }) {
   const [form, setForm] = useState({

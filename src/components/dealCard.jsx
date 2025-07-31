@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { getAuth } from "firebase/auth";
 
-const BACKEND_URL = "http://capstone-deals-app-endpoints.vercel.app";
+const BACKEND_URL = "https://capstone-deals-app-endpoints.vercel.app";
 const DEAL_PLACEHOLDER = "/fallback-deal.png";
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 

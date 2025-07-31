@@ -65,7 +65,7 @@ export default function HomePage({ requireAuth }) {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch("http://capstone-deals-app-endpoints.vercel.app/deals");
+                const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/deals");
                 if (!res.ok) throw new Error("Failed to fetch deals");
                 let data = await res.json();
                 // Sort by net_votes descending
@@ -74,7 +74,7 @@ export default function HomePage({ requireAuth }) {
                 const dealsWithImages = await Promise.all(data.map(async (deal) => {
                     let imageUrl = deal.primary_image_url;
                     try {
-                        const imgRes = await fetch(`http://capstone-deals-app-endpoints.vercel.app/deals/${deal.deal_id}/images`);
+                        const imgRes = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/${deal.deal_id}/images`);
                         if (imgRes.ok) {
                             const images = await imgRes.json();
                             if (images.length > 0) {
@@ -98,7 +98,7 @@ export default function HomePage({ requireAuth }) {
         if (showCategoriesModal) {
             async function fetchCategoriesWithDeals() {
                 try {
-                    const res = await fetch("http://capstone-deals-app-endpoints.vercel.app/categories-with-deals");
+                    const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/categories-with-deals");
                     if (res.ok) {
                         let data = await res.json();
                         // Move 'Other' to the end
@@ -118,7 +118,7 @@ export default function HomePage({ requireAuth }) {
             const user = auth.currentUser;
             if (!user) return;
             const token = await user.getIdToken();
-            const res = await fetch("http://capstone-deals-app-endpoints.vercel.app/user/profile", {
+            const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/user/profile", {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) return; // Not logged in or error

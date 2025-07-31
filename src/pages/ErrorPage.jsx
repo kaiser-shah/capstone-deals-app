@@ -7,7 +7,7 @@ export default function ErrorPage() {
             alignItems: "center", 
             height: "100vh" 
         }}>
-            <img src="/errorlogo.png" alt="error" style={{ width: "30%", height: "auto" }} />
+            <img src="/logos/errorlogo.png" alt="error" style={{ width: "30%", height: "auto" }} />
             <h2 style={{ 
                 textAlign: "center", 
                 fontSize: 24, 

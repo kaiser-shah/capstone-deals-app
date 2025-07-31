@@ -88,7 +88,7 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<HomePage requireAuth={requireAuth} />} />
           <Route path="/profile" element={<ProfilePage setUserProfile={setUserProfile} />} />
-          <Route path="/deal/:deal_id" element={<DealPage />} />
+          <Route path="/deals/:deal_id" element={<DealPage />} />
           <Route path="/login" element={<AuthPage />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="*" element={<ErrorPage />} />  

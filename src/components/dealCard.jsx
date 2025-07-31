@@ -85,7 +85,7 @@ export default function DealCard({
 
   // Handler for card click
   function handleCardClick() {
-    navigate(`${BACKEND_URL}/deal/${deal_id}`);
+    navigate(`/deals/${deal_id}`);
   }
 
   // Helper to stop propagation

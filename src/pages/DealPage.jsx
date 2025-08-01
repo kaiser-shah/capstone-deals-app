@@ -17,7 +17,7 @@ export default function DealPage() {
 
 
   function handleDealEdited(updatedDeal) {
-    // Refetch deal data after edit
+    // Refetch deal data after edit.
     setShowEditModal(false);
     // Optionally show a success message
     // Refetch deal
@@ -605,3 +605,4 @@ function formatDatePosted(created_at) {
   }
   return `${day}${ordinal(day)} ${month} ${year}`;
 }
+

@@ -15,6 +15,7 @@ export default function DealPage() {
   const [showRemoveModal, setShowRemoveModal] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
 
+
   function handleDealEdited(updatedDeal) {
     // Refetch deal data after edit
     setShowEditModal(false);
@@ -80,6 +81,7 @@ export default function DealPage() {
       setLoading(true);
       setError(null);
       try {
+        const token = await user.getIdToken();
         const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/${deal_id}/full`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` }

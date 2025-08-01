@@ -81,11 +81,7 @@ export default function DealPage() {
       setLoading(true);
       setError(null);
       try {
-        const token = await user.getIdToken();
-        const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/${deal_id}/full`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/${deal_id}/full`,);
         if (!res.ok) throw new Error("Failed to fetch deal");
         const data = await res.json();
         setDeal(data);

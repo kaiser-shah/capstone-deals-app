@@ -80,7 +80,10 @@ export default function DealPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals${deal_id}/full`);
+        const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/${deal_id}/full`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (!res.ok) throw new Error("Failed to fetch deal");
         const data = await res.json();
         setDeal(data);
@@ -269,6 +272,7 @@ function VotingSection({ deal_id, initialVotes, userVote: initialUserVote }) {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
+      console.log(user, token)
       const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/addremove/vote`, {
         method: "PUT",
         headers: {
@@ -429,7 +433,11 @@ function DealDetailsSection({ deal }) {
     async function fetchUserDealsCount() {
       if (deal.user_id && (!deal.user_total_deals || deal.user_total_deals === 0)) {
         try {
-          const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/user/${deal.user_id}`);
+          const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/user/${deal.user_id}`,{
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
           if (res.ok) {
             const deals = await res.json();
             setTotalDeals(deals.length);

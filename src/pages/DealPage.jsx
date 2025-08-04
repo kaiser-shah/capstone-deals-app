@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Top from "../components/navbars/Top";
 import { useParams, Link } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
 import PostDealModal from "../components/modals/PostDealModal";

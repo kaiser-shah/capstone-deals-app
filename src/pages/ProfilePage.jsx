@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import Top from "../components/navbars/Top";
+import { useNavigate, useParams } from "react-router-dom";
 import { getAuth, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { Button, Form, Modal, Image, Row, Col, ListGroup, Spinner, InputGroup } from "react-bootstrap";
 import { AuthContext } from "../components/AuthProvider";
@@ -9,6 +10,7 @@ const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
 export default function ProfilePage({ setUserProfile }) {
   const navigate = useNavigate();
+  const { username: routeUsername } = useParams();
   const [profile, setProfile] = useState(null);
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,42 +25,54 @@ export default function ProfilePage({ setUserProfile }) {
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [dealToRemove, setDealToRemove] = useState(null);
   const [removing, setRemoving] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
-    if (!user) {
-      navigate("/", { replace: true });
-      return;
-    }
     async function fetchProfileAndDeals() {
       setLoading(true);
+      setNotFound(false);
       try {
-        // Get profile
-        const token = await user.getIdToken();
-        const res = await fetch(`${BACKEND_URL}/user/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
+        let profileData, dealsData;
+        if (routeUsername && (!user || user.displayName !== routeUsername)) {
+          // Viewing another user's profile by username
+          const res = await fetch(`${BACKEND_URL}/user/${routeUsername}`);
+          if (!res.ok) { setNotFound(true); setLoading(false); return; }
           const data = await res.json();
-          setProfile(data.details);
-          setUsername(data.details.username);
+          profileData = data.user;
+          dealsData = data.deals;
+        } else {
+          // Own profile
+          if (!user) { navigate("/", { replace: true }); return; }
+          const token = await user.getIdToken();
+          const res = await fetch(`${BACKEND_URL}/user/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            profileData = data.details;
+            setUsername(data.details.username);
+          }
+          const dealsRes = await fetch(`${BACKEND_URL}/deals/user/${user.uid}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (dealsRes.ok) {
+            dealsData = await dealsRes.json();
+            dealsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          } else {
+            dealsData = [];
+          }
         }
-        // Get user's deals
-        const dealsRes = await fetch(`${BACKEND_URL}/deals/user/${user.uid}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (dealsRes.ok) {
-          const dealsData = await dealsRes.json();
-          // Sort by date desc
-          dealsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-          setDeals(dealsData);
-        }
-      } catch {}
+        setProfile(profileData);
+        setDeals(dealsData);
+      } catch {
+        setNotFound(true);
+      }
       setLoading(false);
     }
     fetchProfileAndDeals();
-  }, [navigate]);
+  }, [navigate, routeUsername]);
 
   // Avatar upload
   async function handleAvatarChange(e) {
@@ -187,7 +201,13 @@ export default function ProfilePage({ setUserProfile }) {
     }
   }, []);
 
-  if (loading || !profile) return <div className="text-center py-5">Loading...</div>;
+  // Determine if this is the logged-in user's profile
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const isOwnProfile = !routeUsername || (user && profile && profile.username === routeUsername);
+
+  if (loading) return <div className="text-center py-5">Loading...</div>;
+  if (notFound || !profile) return <div className="text-center py-5">User not found.</div>;
 
   return (
     <>
@@ -199,26 +219,28 @@ export default function ProfilePage({ setUserProfile }) {
               roundedCircle
               style={{ width: 130, height: 130, objectFit: "cover", border: "2px solid #e53935" }}
             />
-            <Button
-              variant="light"
-              className="position-absolute bottom-0 end-0 "
-              style={{ borderRadius: "50%", background: "#fff", border: "1px solid #e53935", height: 35, width: 35, padding: 0 }}
-              onClick={() => fileInputRef.current.click()}
-              disabled={avatarUploading}
-            >
-              <i className="bi bi-pencil" style={{ color: '#e53935', fontSize: 18 }}></i>
-            </Button>
+            {isOwnProfile && (
+              <Button
+                variant="light"
+                className="position-absolute bottom-0 end-0 "
+                style={{ borderRadius: "50%", background: "#fff", border: "1px solid #e53935", height: 35, width: 35, padding: 0 }}
+                onClick={() => fileInputRef.current.click()}
+                disabled={avatarUploading}
+              >
+                <i className="bi bi-pencil" style={{ color: '#e53935', fontSize: 18 }}></i>
+              </Button>
+            )}
             <input
               type="file"
               accept="image/*"
               ref={fileInputRef}
               style={{ display: "none" }}
-              onChange={handleAvatarChange}
+              onChange={isOwnProfile ? handleAvatarChange : undefined}
             />
           </div>
           {avatarError && <div className="text-danger small mb-2">{avatarError}</div>}
           <div className="d-flex align-items-center mb-1">
-            {editUsername ? (
+            {editUsername && isOwnProfile ? (
               <InputGroup size="sm">
                 <Form.Control
                   value={username}
@@ -233,9 +255,11 @@ export default function ProfilePage({ setUserProfile }) {
             ) : (
               <>
                 <span className="fw-bold fs-5 me-2">{profile.username}</span>
-                <Button variant="link" size="sm" style={{ color: '#e53935', padding: 0 }} onClick={() => setEditUsername(true)}>
-                  <i className="bi bi-pencil-square" />
-                </Button>
+                {isOwnProfile && (
+                  <Button variant="link" size="sm" style={{ color: '#e53935', padding: 0 }} onClick={() => setEditUsername(true)}>
+                    <i className="bi bi-pencil-square" />
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -245,12 +269,16 @@ export default function ProfilePage({ setUserProfile }) {
             <span><i className="bi bi-chat-left-text me-1" /> 0 Comments</span>
             <span><i className="bi bi-trophy me-1" /> 0 Rank</span>
           </div>
-          <Button variant="danger" size="sm" className="mb-3" onClick={handlePasswordReset}>
-            Change Password
-          </Button>
-          <Button variant="outline-secondary" size="sm" className="mb-3" onClick={handleLogOut}>
-            Log Out
-          </Button>
+          {isOwnProfile && (
+            <>
+              <Button variant="danger" size="sm" className="mb-3" onClick={handlePasswordReset}>
+                Change Password
+              </Button>
+              <Button variant="outline-secondary" size="sm" className="mb-3" onClick={handleLogOut}>
+                Log Out
+              </Button>
+            </>
+          )}
         </div>
         <h5 className="mb-3">{profile.username}'s Deals</h5>
         <ListGroup>
@@ -279,68 +307,74 @@ export default function ProfilePage({ setUserProfile }) {
                     {deal.original_price && <span className="text-secondary" style={{ fontSize: 13, textDecoration: 'line-through' }}>RM{deal.original_price}</span>}
                   </div>
                 </div>
-                <div className="d-flex flex-column align-items-center ms-0" style={{ minWidth: 80, marginTop: 20 }}>
-                  <a
-                    href={deal.deal_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-danger btn-sm mb-2"
-                    style={{ fontSize: 15 }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    Link*
-                  </a>
-                  {(deal.is_active === false) ? (
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={e => { e.stopPropagation(); handleRemoveDeal(deal, true); }}
-                      disabled={removing}
+                {isOwnProfile && (
+                  <div className="d-flex flex-column align-items-center ms-0" style={{ minWidth: 80, marginTop: 20 }}>
+                    <a
+                      href={deal.deal_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-danger btn-sm mb-2"
+                      style={{ fontSize: 15 }}
+                      onClick={e => e.stopPropagation()}
                     >
-                      Undo
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={e => { e.stopPropagation(); setDealToRemove(deal); setShowRemoveModal(true); }}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                </div>
+                      Link*
+                    </a>
+                    {(deal.is_active === false) ? (
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={e => { e.stopPropagation(); handleRemoveDeal(deal, true); }}
+                        disabled={removing}
+                      >
+                        Undo
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={e => { e.stopPropagation(); setDealToRemove(deal); setShowRemoveModal(true); }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </ListGroup.Item>
           ))}
         </ListGroup>
       </div>
       {/* Remove confirmation modal */}
-      <Modal show={showRemoveModal} onHide={() => setShowRemoveModal(false)} centered>
-        <Modal.Body className="text-center p-4">
-          <h5>Remove Deal?</h5>
-          <div className="text-secondary mb-3">Are you sure you want to remove this deal? This can be undone.</div>
-          <Button variant="danger" className="me-2" onClick={() => handleRemoveDeal(dealToRemove, false)} disabled={removing}>Remove</Button>
-          <Button variant="secondary" onClick={() => setShowRemoveModal(false)} disabled={removing}>Cancel</Button>
-        </Modal.Body>
-      </Modal>
+      {isOwnProfile && (
+        <Modal show={showRemoveModal} onHide={() => setShowRemoveModal(false)} centered>
+          <Modal.Body className="text-center p-4">
+            <h5>Remove Deal?</h5>
+            <div className="text-secondary mb-3">Are you sure you want to remove this deal? This can be undone.</div>
+            <Button variant="danger" className="me-2" onClick={() => handleRemoveDeal(dealToRemove, false)} disabled={removing}>Remove</Button>
+            <Button variant="secondary" onClick={() => setShowRemoveModal(false)} disabled={removing}>Cancel</Button>
+          </Modal.Body>
+        </Modal>
+      )}
       {/* Password reset modal (restored) */}
-      <Modal show={showResetModal} onHide={() => setShowResetModal(false)} centered>
-        <Modal.Body className="text-center p-4">
-          {resetEmailSent ? (
-            <>
-              <h5>Password Reset Email Sent</h5>
-              <div className="text-secondary mb-3">Check your email for a link to reset your password.</div>
-              <Button variant="danger" onClick={() => setShowResetModal(false)}>Close</Button>
-            </>
-          ) : (
-            <>
-              <h5>Send Password Reset Email?</h5>
-              <div className="text-secondary mb-3">A password reset link will be sent to your email address.</div>
-              <Button variant="danger" onClick={() => setShowResetModal(false)}>Cancel</Button>
-            </>
-          )}
-        </Modal.Body>
-      </Modal>
+      {isOwnProfile && (
+        <Modal show={showResetModal} onHide={() => setShowResetModal(false)} centered>
+          <Modal.Body className="text-center p-4">
+            {resetEmailSent ? (
+              <>
+                <h5>Password Reset Email Sent</h5>
+                <div className="text-secondary mb-3">Check your email for a link to reset your password.</div>
+                <Button variant="danger" onClick={() => setShowResetModal(false)}>Close</Button>
+              </>
+            ) : (
+              <>
+                <h5>Send Password Reset Email?</h5>
+                <div className="text-secondary mb-3">A password reset link will be sent to your email address.</div>
+                <Button variant="danger" onClick={() => setShowResetModal(false)}>Cancel</Button>
+              </>
+            )}
+          </Modal.Body>
+        </Modal>
+      )}
     </>
   );
 }

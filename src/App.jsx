@@ -12,6 +12,7 @@ import ErrorPage from "./pages/ErrorPage";
 import PostDealModal from "./components/modals/PostDealModal";
 import SideBarModal from "./components/modals/SideBarModal";
 import NotificationModal from "./components/modals/NotificationModal";
+import SearchResultsPage from "./pages/SearchResultsPage";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 function AppLayout() {
@@ -23,6 +24,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const [showSideBar, setShowSideBar] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const auth = getAuth();
@@ -83,14 +85,16 @@ function AppLayout() {
 
   return (
     <>
-      <Top />
+      <Top searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <div style={{ minHeight: "calc(100vh - 130px)" }}>
         <Routes>
           <Route path="/" element={<HomePage requireAuth={requireAuth} />} />
           <Route path="/profile" element={<ProfilePage setUserProfile={setUserProfile} />} />
+          <Route path="/profile/:username" element={<ProfilePage />} />
           <Route path="/deals/:deal_id" element={<DealPage />} />
           <Route path="/login" element={<AuthPage />} />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/search" element={<SearchResultsPage requireAuth={requireAuth} />} />          
           <Route path="*" element={<ErrorPage />} />  
         </Routes>
       </div>

@@ -169,7 +169,13 @@ export default function DealCard({
                 }
               }}
             />
-            <span className="text-secondary" style={{ fontSize: 13 }}>Posted by {postedBy}</span> 
+            <span
+              className="text-secondary"
+              style={{ fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={e => { e.stopPropagation(); navigate(`/profile/${postedBy}`); }}
+            >
+              Posted by {postedBy}
+            </span>
           </div>
           <div id="dealcard-main-description" className="text-secondary mb-2" style={{ fontSize: 13, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis' }}>{description}</div>
           <div id="dealcard-main-price" className="d-flex align-items-center mb-2">

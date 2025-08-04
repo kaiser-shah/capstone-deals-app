@@ -8,8 +8,9 @@ import Top from "../components/navbars/Top";
 import { Modal, Button, ListGroup } from "react-bootstrap";
 import CategoriesModal from "../components/modals/CategoriesModal";
 
-const DEAL_PLACEHOLDER = "https://via.placeholder.com/90?text=No+Image";
-const AVATAR_PLACEHOLDER = "https://via.placeholder.com/28?text=User";
+const DEAL_PLACEHOLDER = "/public/fallback-deal.png";
+const AVATAR_PLACEHOLDER = "/public/fallback-avatar.png";
+const BACKEND_URL = "https://capstone-deals-app-endpoints.vercel.app";
 
 function getHoursAgo(created_at) {
     if (!created_at) return "";
@@ -59,6 +60,7 @@ export default function HomePage({ requireAuth }) {
     const [categoryDeals, setCategoryDeals] = useState([]);
     const [showSideBar, setShowSideBar] = useState(false);
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState(""); // NEW
 
     useEffect(() => {
         async function fetchDeals() {
@@ -70,19 +72,10 @@ export default function HomePage({ requireAuth }) {
                 let data = await res.json();
                 // Sort by net_votes descending
                 data.sort((a, b) => b.net_votes - a.net_votes);
-                // For each deal, fetch images
-                const dealsWithImages = await Promise.all(data.map(async (deal) => {
-                    let imageUrl = deal.primary_image_url;
-                    try {
-                        const imgRes = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/${deal.deal_id}/images`);
-                        if (imgRes.ok) {
-                            const images = await imgRes.json();
-                            if (images.length > 0) {
-                                imageUrl = images[0].image_url;
-                            }
-                        }
-                    } catch {}
-                    return { ...deal, imageUrl };
+                // Use only the primary_image_url from the deal object
+                const dealsWithImages = data.map(deal => ({
+                    ...deal,
+                    imageUrl: deal.primary_image_url || null
                 }));
                 setDeals(dealsWithImages);
             } catch (err) {
@@ -163,6 +156,17 @@ export default function HomePage({ requireAuth }) {
         }
     }
 
+    // Filter by search query
+    if (searchQuery.trim() !== "") {
+        const q = searchQuery.trim().toLowerCase();
+        displayedDeals = displayedDeals.filter(deal =>
+            (deal.title && deal.title.toLowerCase().includes(q)) ||
+            (deal.description && deal.description.toLowerCase().includes(q)) ||
+            (deal.merchant && deal.merchant.toLowerCase().includes(q)) ||
+            (deal.username && deal.username.toLowerCase().includes(q))
+        );
+    }
+
     const categoryIcons = {
         "Fashion": "bi-sunglasses", // or "bi-shirt" if available
         "Home & Living": "bi-house-door",
@@ -176,7 +180,7 @@ export default function HomePage({ requireAuth }) {
 
     return (
         <>
-            <Top />
+            <Top searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             <SecondBar selectedTab={selectedTab} onTabSelect={setSelectedTab} onCategoriesClick={() => setShowCategoriesModal(true)} />
             <div
                 id="homepage-deals"

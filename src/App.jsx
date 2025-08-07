@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Routes, Route, BrowserRouter, useNavigate } from "react-router-dom";
 import Top from "./components/navbars/Top";
 import Bottom from "./components/navbars/Bottom";
@@ -13,42 +13,42 @@ import PostDealModal from "./components/modals/PostDealModal";
 import SideBarModal from "./components/modals/SideBarModal";
 import NotificationModal from "./components/modals/NotificationModal";
 import SearchResultsPage from "./pages/SearchResultsPage";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { AuthContext } from "./components/AuthProvider"; // Import AuthContext
 
 function AppLayout() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPostDealModal, setShowPostDealModal] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [loginReason, setLoginReason] = useState(null); // 'vote', 'post', or null
+  const [loginReason, setLoginReason] = useState(null);
   const navigate = useNavigate();
   const [showSideBar, setShowSideBar] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setAuthReady(true);
-      if (user) {
-        fetchProfile(user);
-      } else {
-        setUserProfile(null);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+  // Use AuthContext instead of Firebase directly
+  const { currentUser, token } = useContext(AuthContext);
 
-  async function fetchProfile(user) {
+  useEffect(() => {
+    if (currentUser && token) {
+      fetchProfile();
+    } else {
+      setUserProfile(null);
+    }
+  }, [currentUser, token]);
+
+  async function fetchProfile() {
+    if (!token) return;
+    
     try {
-      const token = await user.getIdToken();
       const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/user/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
       const data = await res.json();
       setUserProfile(data.details);
-    } catch (err) {}
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+    }
   }
 
   function requireAuth(reason) {
@@ -57,13 +57,10 @@ function AppLayout() {
   }
 
   function handleLoginSuccess() {
-    const auth = getAuth();
-    if (auth.currentUser) {
-      fetchProfile(auth.currentUser);
-    }
+    // The useEffect will handle fetching profile when currentUser/token updates
     setShowLoginModal(false);
     if (loginReason === 'vote') {
-      setLoginReason(null); // Stay on HomePage
+      setLoginReason(null);
     } else if (loginReason === 'post') {
       setLoginReason(null);
       setShowPostDealModal(true);
@@ -80,8 +77,6 @@ function AppLayout() {
       setShowLoginModal(true);
     }
   }
-
-  if (!authReady) return null;
 
   return (
     <>
@@ -110,7 +105,7 @@ function AppLayout() {
       <NotificationModal show={showNotification} onClose={() => setShowNotification(false)} />
       <LoginSignupModal
         show={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
+        onHide={() => setShowLoginModal(false)}
         onLoginSuccess={handleLoginSuccess}
       />
       <PostDealModal

@@ -5,7 +5,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, Go
 
 const BACKEND_URL = "https://capstone-deals-app-endpoints.vercel.app";
 
-export default function LoginSignupModal({ show, onClose, onLoginSuccess }) {
+export default function LoginSignupModal({ show, onHide, onLoginSuccess }) {
   const [step, setStep] = useState("email"); // 'email', 'login', 'signup'
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -21,7 +21,7 @@ export default function LoginSignupModal({ show, onClose, onLoginSuccess }) {
     setPassword("");
     setError("");
     setLoading(false);
-    onClose();
+    onHide();
   }
 
   // Check if user exists by email

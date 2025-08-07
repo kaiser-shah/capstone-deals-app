@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useContext } from "react";
 import Top from "../components/navbars/Top";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAuth, signOut, sendPasswordResetEmail } from "firebase/auth";
@@ -9,6 +9,8 @@ const BACKEND_URL = "https://capstone-deals-app-endpoints.vercel.app";
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
 export default function ProfilePage({ setUserProfile }) {
+  // Move useContext to top level - CRITICAL FIX
+  const { currentUser, token } = useContext(AuthContext);
   const navigate = useNavigate();
   const { username: routeUsername } = useParams();
   const [profile, setProfile] = useState(null);
@@ -28,14 +30,13 @@ export default function ProfilePage({ setUserProfile }) {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const auth = getAuth();
-    const user = auth.currentUser;
+    
     async function fetchProfileAndDeals() {
       setLoading(true);
       setNotFound(false);
       try {
         let profileData, dealsData;
-        if (routeUsername && (!user || user.displayName !== routeUsername)) {
+        if (routeUsername && (!currentUser || currentUser.displayName !== routeUsername)) {
           // Viewing another user's profile by username
           const res = await fetch(`${BACKEND_URL}/user/${routeUsername}`);
           if (!res.ok) { setNotFound(true); setLoading(false); return; }
@@ -44,8 +45,11 @@ export default function ProfilePage({ setUserProfile }) {
           dealsData = data.deals;
         } else {
           // Own profile
-          if (!user) { navigate("/", { replace: true }); return; }
-          const token = await user.getIdToken();
+          if (!currentUser || !token) { 
+            navigate("/", { replace: true }); 
+            return; 
+          }
+                    
           const res = await fetch(`${BACKEND_URL}/user/profile`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -53,8 +57,11 @@ export default function ProfilePage({ setUserProfile }) {
             const data = await res.json();
             profileData = data.details;
             setUsername(data.details.username);
+          } else {
+            console.error("Profile fetch failed:", res.status, res.statusText);
           }
-          const dealsRes = await fetch(`${BACKEND_URL}/deals/user/${user.uid}`, {
+          
+          const dealsRes = await fetch(`${BACKEND_URL}/deals/user/${currentUser.uid}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (dealsRes.ok) {
@@ -66,24 +73,24 @@ export default function ProfilePage({ setUserProfile }) {
         }
         setProfile(profileData);
         setDeals(dealsData);
-      } catch {
+      } catch (error) {
+        console.error("Fetch error:", error);
         setNotFound(true);
       }
       setLoading(false);
     }
+    
     fetchProfileAndDeals();
-  }, [navigate, routeUsername]);
+  }, [navigate, routeUsername, currentUser, token]);
 
   // Avatar upload
   async function handleAvatarChange(e) {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file || !token) return;
+    
     setAvatarUploading(true);
     setAvatarError("");
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      const token = await user.getIdToken();
       const fd = new FormData();
       fd.append("profile_pic", file);
       const res = await fetch(`${BACKEND_URL}/user/profile-pic`, {
@@ -108,6 +115,8 @@ export default function ProfilePage({ setUserProfile }) {
 
   // Username edit
   async function handleUsernameSave() {
+    if (!token) return;
+    
     setUsernameError("");
     if (!username.trim()) {
       setUsernameError("Username cannot be empty");
@@ -117,7 +126,7 @@ export default function ProfilePage({ setUserProfile }) {
       setEditUsername(false);
       return;
     }
-    // Check uniqueness
+    
     try {
       const res = await fetch(`${BACKEND_URL}/user/exists?username=${encodeURIComponent(username)}`);
       if (res.ok) {
@@ -127,10 +136,7 @@ export default function ProfilePage({ setUserProfile }) {
           return;
         }
       }
-      // Update username
-      const auth = getAuth();
-      const user = auth.currentUser;
-      const token = await user.getIdToken();
+      
       const updateRes = await fetch(`${BACKEND_URL}/user/edit`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -170,22 +176,19 @@ export default function ProfilePage({ setUserProfile }) {
     }
   };
 
-  // NOTE: Make sure your backend /deals/user/:user_id returns is_active for each deal!
+  // Remove deal
   const handleRemoveDeal = useCallback(async (deal, makeActive) => {
+    if (!token) return;
+    
     setRemoving(true);
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      const token = await user.getIdToken();
       let res;
       if (makeActive) {
-        // Reactivate
         res = await fetch(`${BACKEND_URL}/deals/${deal.deal_id}/reactivate`, {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        // Soft delete
         res = await fetch(`${BACKEND_URL}/deals/${deal.deal_id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` }
@@ -199,12 +202,11 @@ export default function ProfilePage({ setUserProfile }) {
     } finally {
       setRemoving(false);
     }
-  }, []);
+  }, [token]);
 
   // Determine if this is the logged-in user's profile
-  const auth = getAuth();
-  const user = auth.currentUser;
-  const isOwnProfile = !routeUsername || (user && profile && profile.username === routeUsername);
+  // const isOwnProfile = !routeUsername || (currentUser && profile && profile.username === routeUsername); // !routeUsername is for the case when the user is viewing their own profile
+  const isOwnProfile = currentUser && profile && currentUser.uid === profile.user_id;
 
   if (loading) return <div className="text-center py-5">Loading...</div>;
   if (notFound || !profile) return <div className="text-center py-5">User not found.</div>;
@@ -263,6 +265,7 @@ export default function ProfilePage({ setUserProfile }) {
               </>
             )}
           </div>
+          <div className="text-secondary mb-2" style={{ fontSize: 15 }}> Joined {profile.created_at ? formatDatePosted(profile.created_at) : "--"}</div>
           <div className="text-secondary mb-2">{profile.email}</div>
           <div className="d-flex justify-content-center align-items-center gap-4 bg-light rounded-pill px-3 py-2 mb-3" style={{ fontSize: 15 }}>
             <span><i className="bi bi-bag me-1" /> {deals.length} Deals</span>
@@ -287,7 +290,7 @@ export default function ProfilePage({ setUserProfile }) {
               key={deal.deal_id}
               className="p-2 mb-2 rounded-3 shadow-sm border-0"
               style={{ background: '#fafafa', position: 'relative', filter: deal.is_active === false ? 'grayscale(1) opacity(0.6)' : 'none', cursor: 'pointer' }}
-              onClick={() => navigate(`/deal/${deal.deal_id}`)}
+              onClick={() => navigate(`/deals/${deal.deal_id}`)}
             >
               <div className="d-flex align-items-center gap-2 position-relative">
                 {deal.is_active === false && (
@@ -344,7 +347,7 @@ export default function ProfilePage({ setUserProfile }) {
           ))}
         </ListGroup>
       </div>
-      {/* Remove confirmation modal */}
+      {/* Modals remain the same */}
       {isOwnProfile && (
         <Modal show={showRemoveModal} onHide={() => setShowRemoveModal(false)} centered>
           <Modal.Body className="text-center p-4">
@@ -355,7 +358,6 @@ export default function ProfilePage({ setUserProfile }) {
           </Modal.Body>
         </Modal>
       )}
-      {/* Password reset modal (restored) */}
       {isOwnProfile && (
         <Modal show={showResetModal} onHide={() => setShowResetModal(false)} centered>
           <Modal.Body className="text-center p-4">
@@ -379,7 +381,7 @@ export default function ProfilePage({ setUserProfile }) {
   );
 }
 
-// Helper to format date posted
+// Helper function remains the same
 function formatDatePosted(created_at) {
   if (!created_at) return "";
   const created = new Date(created_at);
@@ -396,5 +398,4 @@ function formatDatePosted(created_at) {
     }
   }
   return `${day}${ordinal(day)} ${month} ${year}`;
-}
-
+} 

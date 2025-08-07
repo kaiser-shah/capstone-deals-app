@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import SecondBar from "../components/navbars/SecondBar";
 import DealCard from "../components/dealCard";
 import LoginSignupModal from "../components/modals/LoginSignupModal";
@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Top from "../components/navbars/Top";
 import { Modal, Button, ListGroup } from "react-bootstrap";
 import CategoriesModal from "../components/modals/CategoriesModal";
+import { AuthContext } from "../components/AuthProvider";
 
 const DEAL_PLACEHOLDER = "/public/fallback-deal.png";
 const AVATAR_PLACEHOLDER = "/public/fallback-avatar.png";
@@ -48,6 +49,9 @@ export function getDomain(url) {
 }
 
 export default function HomePage({ requireAuth }) {
+    // ✅ CORRECT - Move useContext to top level
+    const { currentUser, token } = useContext(AuthContext);
+    
     const [deals, setDeals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -105,26 +109,29 @@ export default function HomePage({ requireAuth }) {
         }
     }, [showCategoriesModal]);
 
+    // ✅ CORRECT - Function now uses the context values from top level
     async function fetchProfile() {
         try {
-            const auth = getAuth();
-            const user = auth.currentUser;
-            if (!user) return;
-            const token = await user.getIdToken();
+            if (!currentUser || !token) return;
+                        
             const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/user/profile", {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (!res.ok) return; // Not logged in or error
+            if (!res.ok) {
+                console.error("Profile fetch failed:", res.status, res.statusText);
+                return;
+            }
             const data = await res.json();
             setUserProfile(data.details);
         } catch (err) {
-            // Ignore profile errors for now
+            console.error("Profile fetch error:", err);
         }
     }
 
+    // ✅ CORRECT - useEffect will run when currentUser or token changes
     useEffect(() => {
         fetchProfile();
-    }, []);
+    }, [currentUser, token]);
 
     function handleLoginSuccess() {
         fetchProfile();
@@ -187,22 +194,22 @@ export default function HomePage({ requireAuth }) {
                 className="container-fluid px-2"
                 style={{
                     paddingTop: 130,   // adjust to match your nav height
-                    paddingBottom: 60,
- // adjust to match your footer height
+                    paddingBottom: 60, // adjust to match your footer height
                 }}
             >
                 {loading && <div className="text-center py-8">Loading deals...</div>}
                 {error && <div className="text-danger">{error}</div>}
                 {!loading && !error && displayedDeals.length === 0 && (
-  <div className="text-center py-8">
-    <h2 className="text-2xl md:text-3xl font-semibold text-gray-600 mb-2">
-      No deals found
-    </h2>
-    <div className="text-lg text-gray-400 font-light">
-      ...yet!
-    </div>
-  </div>
-)}                {!loading && !error && displayedDeals.map((deal) => {
+                    <div className="text-center py-8">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-gray-600 mb-2">
+                            No deals found
+                        </h2>
+                        <div className="text-lg text-gray-400 font-light">
+                            ...yet!
+                        </div>
+                    </div>
+                )}
+                {!loading && !error && displayedDeals.map((deal) => {
                     // Fix image URLs
                     let imageUrl = deal.imageUrl || DEAL_PLACEHOLDER;
                     if (imageUrl && !imageUrl.startsWith("http")) {
@@ -247,10 +254,11 @@ export default function HomePage({ requireAuth }) {
             />
             <LoginSignupModal
                 show={showLoginModal}
-                onClose={() => setShowLoginModal(false)}
-                onLoginSuccess={handleLoginSuccess}
+                onHide={() => setShowLoginModal(false)}
+                onLoginSuccess={() => {
+                  setShowLoginModal(false);
+                }}
             />
         </>
     )
 }
-

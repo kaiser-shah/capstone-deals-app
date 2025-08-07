@@ -179,7 +179,7 @@ export default function PostDealModal({ show, onClose, onDealPosted, initialData
 
   return (
     <Modal show={show} onHide={onClose} centered animation={true} dialogClassName="post-deal-modal" contentClassName="border-0" style={{ zIndex: 2100 }}>
-      <Modal.Body style={{ borderRadius: "24px 24px 0 0", padding: 32, background: "#fff", minHeight: 400 }}>
+      <Modal.Body style={{ borderRadius: "24px 24px 0 0", padding: 32, background: "#fff", minHeight: 400, border: "1px solid red" }}>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <span style={{ fontWeight: 700, fontSize: 22 }}>{isEdit ? 'Edit Deal' : 'Submit a new deal'}</span>
           <i className="bi bi-x-lg" style={{ fontSize: 24, cursor: "pointer" }} onClick={onClose}></i>

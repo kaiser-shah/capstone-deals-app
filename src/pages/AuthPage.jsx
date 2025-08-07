@@ -40,7 +40,6 @@ const handleLogin = async (e) => {
     e.preventDefault();
     try{
       let user = await signInWithEmailAndPassword(auth, username, password);
-   console.log(user)
       //  const user = userCredential.user;
 
        // Get the firebase JWT token

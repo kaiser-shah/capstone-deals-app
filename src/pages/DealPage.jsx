@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Top from "../components/navbars/Top";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
 import PostDealModal from "../components/modals/PostDealModal";
 import { Modal, Button } from "react-bootstrap";
 import DealCard from "../components/dealCard";
 import { getDomain } from "./HomePage";
+import { getAuth, signOut } from "firebase/auth";
+import LoginSignupModal from "../components/modals/LoginSignupModal";
 
 export default function DealPage() {
   const { deal_id } = useParams();
@@ -15,6 +17,9 @@ export default function DealPage() {
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showRemoveModal, setShowRemoveModal] = React.useState(false);
   const [removing, setRemoving] = React.useState(false);
+  const [showLoginModal, setShowLoginModal] = React.useState(false);
+  const [authRefresh, setAuthRefresh] = React.useState(0); // unified for login/logout
+  const navigate = useNavigate()
 
 
   function handleDealEdited(updatedDeal) {
@@ -77,6 +82,23 @@ export default function DealPage() {
     }
   }
 
+  function requireAuth(action) {
+    setShowLoginModal(true);
+  }
+  function handleLoginSuccess() {
+    setShowLoginModal(false);
+    setAuthRefresh(r => r + 1); // trigger refetch
+  }
+  async function handleLogout() {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      setAuthRefresh(r => r + 1); // trigger refetch
+    } catch (error) {
+      // Optionally show error
+    }
+  }
+
   useEffect(() => {
     async function fetchDeal() {
       setLoading(true);
@@ -93,7 +115,7 @@ export default function DealPage() {
       }
     }
     fetchDeal();
-  }, [deal_id]);
+  }, [deal_id, authRefresh]);
 
   if (loading) return <div className="text-center py-5"><Spinner animation="border" /></div>;
   if (error) return <div className="text-danger text-center py-5">{error}</div>;
@@ -131,7 +153,14 @@ export default function DealPage() {
         deal_id={deal.deal_id}
         initialVotes={deal.net_votes}
         userVote={deal.user_vote}
+        requireAuth={requireAuth}
       />
+      {/* Posted on date below net votes */}
+      <div className="d-flex align-items-center gap-2 mb-2" style={{ fontSize: 15, color: '#888', fontWeight: 500 }}>
+        <span>Posted {formatDatePosted(deal.created_at)}</span>
+      </div>
+      {/* Example logout button for demonstration, remove or move as needed */}
+      <button className="btn btn-outline-secondary mb-3" onClick={handleLogout} style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}>Log Out</button>
 
       {/* Deal Information Section */}
       <DealInfoSection 
@@ -178,6 +207,11 @@ export default function DealPage() {
       />
 
       {/* More sections to be implemented here */}
+      <LoginSignupModal
+        show={showLoginModal}
+        onHide={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }
@@ -188,61 +222,144 @@ function ImageGallery({ images }) {
   const maxImages = 5;
   const imgs = (images && images.length > 0) ? images.slice(0, maxImages) : [{ image_url: "/fallback-deal.png" }];
 
-  function handleDotClick(idx) {
+  // Touch state for swipe
+  const [touchStartX, setTouchStartX] = React.useState(null);
+  const [touchEndX, setTouchEndX] = React.useState(null);
+
+  function handleThumbnailClick(idx) {
     setCurrent(idx);
-    // Scroll to image if needed (for mobile)
-    const el = document.getElementById(`deal-img-${idx}`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+
+  function handlePrev() {
+    setCurrent(c => (c > 0 ? c - 1 : c));
+  }
+
+  function handleNext() {
+    setCurrent(c => (c < imgs.length - 1 ? c + 1 : c));
+  }
+
+  // Touch event handlers for swipe
+  function onTouchStart(e) {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchEndX(null);
+  }
+  function onTouchMove(e) {
+    setTouchEndX(e.touches[0].clientX);
+  }
+  function onTouchEnd() {
+    if (touchStartX === null || touchEndX === null) return;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 40) { // minimum swipe distance
+      if (diff > 0 && current < imgs.length - 1) {
+        // swipe left
+        setCurrent(current + 1);
+      } else if (diff < 0 && current > 0) {
+        // swipe right
+        setCurrent(current - 1);
+      }
+    }
+    setTouchStartX(null);
+    setTouchEndX(null);
   }
 
   return (
     <div className="mb-4">
-      <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', borderRadius: 16, position: 'relative' }}>
-        <div style={{ display: 'flex', gap: 0 }}>
-          {imgs.map((img, idx) => (
-            <img
-              key={idx}
-              id={`deal-img-${idx}`}
-              src={img.image_url}
-              alt={`Deal image ${idx + 1}`}
-              style={{
-                width: 360,
-                height: 220,
-                objectFit: 'contain',
-                background: '#fff',
-                borderRadius: 16,
-                marginRight: idx < imgs.length - 1 ? 8 : 0,
-                border: current === idx ? '2px solid #e53935' : '2px solid transparent',
-                transition: 'border 0.2s',
-                cursor: 'pointer',
-                display: 'inline-block'
-              }}
-              onClick={() => setCurrent(idx)}
-            />
-          ))}
-        </div>
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+        {/* Left arrow */}
+        <button
+          onClick={handlePrev}
+          disabled={current === 0}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255,255,255,0.8)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 22,
+            color: '#e53935',
+            zIndex: 2,
+            cursor: current === 0 ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
+          }}
+          aria-label="Previous image"
+        >
+          <i className="bi bi-chevron-left" />
+        </button>
+        {/* Main image with swipe handlers */}
+        <img
+          src={imgs[current].image_url}
+          alt={`Deal image ${current + 1}`}
+          style={{
+            width: 340,
+            height: 220,
+            objectFit: 'contain',
+            background: '#fff',
+            borderRadius: 16,
+            border: '2px solid #e53935',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+            display: 'block',
+            margin: '0 auto',
+            touchAction: 'pan-y'
+          }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+        {/* Right arrow */}
+        <button
+          onClick={handleNext}
+          disabled={current === imgs.length - 1}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255,255,255,0.8)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 22,
+            color: '#e53935',
+            zIndex: 2,
+            cursor: current === imgs.length - 1 ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.07)'
+          }}
+          aria-label="Next image"
+        >
+          <i className="bi bi-chevron-right" />
+        </button>
       </div>
-      {/* Pagination dots */}
-      <div className="d-flex justify-content-center mt-2 gap-2">
-        {imgs.map((_, idx) => (
-          <button
+      {/* Thumbnails */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+        {imgs.map((img, idx) => (
+          <img
             key={idx}
-            className="p-0 border-0 bg-transparent"
-            style={{ outline: 'none' }}
-            onClick={() => handleDotClick(idx)}
-            aria-label={`Go to image ${idx + 1}`}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: current === idx ? '#e53935' : '#ddd',
-                transition: 'background 0.2s'
-              }}
-            />
-          </button>
+            src={img.image_url}
+            alt={`Thumbnail ${idx + 1}`}
+            onClick={() => handleThumbnailClick(idx)}
+            style={{
+              width: 54,
+              height: 54,
+              objectFit: 'cover',
+              borderRadius: 10,
+              border: current === idx ? '2px solid #e53935' : '2px solid #eee',
+              boxShadow: current === idx ? '0 2px 8px rgba(229,57,53,0.15)' : 'none',
+              cursor: 'pointer',
+              opacity: current === idx ? 1 : 0.7,
+              transition: 'border 0.2s, box-shadow 0.2s, opacity 0.2s'
+            }}
+          />
         ))}
       </div>
     </div>
@@ -250,7 +367,7 @@ function ImageGallery({ images }) {
 }
 
 // VotingSection component for DealPage
-function VotingSection({ deal_id, initialVotes, userVote: initialUserVote }) {
+function VotingSection({ deal_id, initialVotes, userVote: initialUserVote, requireAuth }) {
   const [votes, setVotes] = React.useState(initialVotes || 0);
   const [userVote, setUserVote] = React.useState(initialUserVote); // 'up', 'down', or null
   const [loading, setLoading] = React.useState(false);
@@ -266,12 +383,14 @@ function VotingSection({ deal_id, initialVotes, userVote: initialUserVote }) {
     if (loading) return;
     setLoading(true);
     try {
-      // Assume user is logged in for now
       const auth = (await import('firebase/auth')).getAuth();
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        if (requireAuth) requireAuth('vote');
+        setLoading(false);
+        return;
+      }
       const token = await user.getIdToken();
-      console.log(user, token)
       const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/addremove/vote`, {
         method: "PUT",
         headers: {
@@ -416,9 +535,11 @@ function RemoveDealModal({ show, onHide, onConfirm, removing }) {
 
 // DealDetailsSection component for DealPage
 function DealDetailsSection({ deal }) {
+  const navigate = useNavigate(); // <-- add this here
   // Placeholder values for user stats (replace with real data if available)
   const userAvatar = deal.profile_pic || "/fallback-avatar.png";
   const username = deal.username || "Unknown";
+  let postedBy = deal.username || "Unknown";
   const [totalDeals, setTotalDeals] = React.useState(deal.user_total_deals || 0);
   const accountCreated = deal.user_created_at ? formatDatePosted(deal.user_created_at) : (deal.account_created_at ? formatDatePosted(deal.account_created_at) : "--");
   const totalLikes = deal.user_total_likes || 0;
@@ -432,6 +553,10 @@ function DealDetailsSection({ deal }) {
     async function fetchUserDealsCount() {
       if (deal.user_id && (!deal.user_total_deals || deal.user_total_deals === 0)) {
         try {
+          const auth = (await import('firebase/auth')).getAuth();
+          const user = auth.currentUser;
+          if (!user) return;
+          const token = await user.getIdToken();
           const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/deals/user/${deal.user_id}`,{
             method: "GET",
             headers: { Authorization: `Bearer ${token}` }
@@ -453,7 +578,18 @@ function DealDetailsSection({ deal }) {
       <div className="d-flex align-items-center mb-3 gap-3">
         <img src={userAvatar} alt={username} className="rounded-circle" style={{ width: 48, height: 48, objectFit: 'cover', border: '2px solid #e53935' }} />
         <div>
-          <div className="fw-bold" style={{ fontSize: 17 }}><span className="text-secondary" style={{ fontWeight: 400, fontSize: 15 }}>Posted by </span>{username}</div>
+        <div className="fw-bold" style={{ fontSize: 17 }}>
+          <span
+            className="text-secondary"
+            style={{ fontWeight: 400, fontSize: 15, cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={e => {
+              e.stopPropagation();
+              navigate(`/profile/${postedBy}`);
+            }}
+          >
+            Posted by {username}
+          </span>
+        </div>
           <div className="text-secondary" style={{ fontSize: 13 }}>Joined {accountCreated}</div>
           <div className="d-flex gap-3 mt-1" style={{ fontSize: 13 }}>
             <span><i className="bi bi-bag me-1" /> {totalDeals} Deals</span>

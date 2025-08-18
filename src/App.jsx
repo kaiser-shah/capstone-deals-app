@@ -20,6 +20,7 @@ function AppLayout() {
   const [showPostDealModal, setShowPostDealModal] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [loginReason, setLoginReason] = useState(null);
+  const [loginJustSucceeded, setLoginJustSucceeded] = useState(false); // NEW
   const navigate = useNavigate();
   const [showSideBar, setShowSideBar] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
@@ -35,6 +36,13 @@ function AppLayout() {
       setUserProfile(null);
     }
   }, [currentUser, token]);
+
+  useEffect(() => {
+    if (loginJustSucceeded && userProfile && userProfile.username) {
+      navigate(`/user/${userProfile.username}`);
+      setLoginJustSucceeded(false);
+    }
+  }, [loginJustSucceeded, userProfile, navigate]);
 
   async function fetchProfile() {
     if (!token) return;
@@ -57,16 +65,9 @@ function AppLayout() {
   }
 
   function handleLoginSuccess() {
-    // The useEffect will handle fetching profile when currentUser/token updates
     setShowLoginModal(false);
-    if (loginReason === 'vote') {
-      setLoginReason(null);
-    } else if (loginReason === 'post') {
-      setLoginReason(null);
-      setShowPostDealModal(true);
-    } else {
-      navigate('/profile');
-    }
+    setLoginJustSucceeded(true); // Set flag for navigation
+    setLoginReason(null);
   }
 
   function handlePostClick() {
@@ -84,8 +85,8 @@ function AppLayout() {
       <div style={{ minHeight: "calc(100vh - 130px)" }}>
         <Routes>
           <Route path="/" element={<HomePage requireAuth={requireAuth} />} />
-          <Route path="/profile" element={<ProfilePage setUserProfile={setUserProfile} />} />
-          <Route path="/user/:username" element={<ProfilePage />} />
+          {/* <Route path="/profile" element={<ProfilePage setUserProfile={setUserProfile} />} /> */}
+          <Route path="/user/:username" element={<ProfilePage setUserProfile={setUserProfile} />} />
           <Route path="/deals/:deal_id" element={<DealPage />} />
           <Route path="/login" element={<AuthPage />} />
           <Route path="/about" element={<AboutUs />} />
@@ -97,6 +98,7 @@ function AppLayout() {
         onLoginClick={() => { setLoginReason(null); setShowLoginModal(true); }}
         isLoggedIn={!!userProfile}
         avatarUrl={userProfile && userProfile.profile_pic}
+        userProfile={userProfile}
         onPostClick={handlePostClick}
         onMenuClick={() => setShowSideBar(true)}
         onNotificationClick={() => setShowNotification(true)}

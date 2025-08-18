@@ -56,7 +56,6 @@ export default function HomePage({ requireAuth }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
-    const [showLoginModal, setShowLoginModal] = useState(false);
     const [selectedTab, setSelectedTab] = useState(0); // 0: Hottest, 1: Trending, 2: All, 3: Categories
     const [showCategoriesModal, setShowCategoriesModal] = useState(false);
     const [categories, setCategories] = useState([]); // now array of {category_id, category_name, deals}
@@ -79,7 +78,7 @@ export default function HomePage({ requireAuth }) {
                 // Use only the primary_image_url from the deal object
                 const dealsWithImages = data.map(deal => ({
                     ...deal,
-                    imageUrl: deal.primary_image_url || null
+                    imageUrl: deal.primary_image_url || deal.image_url || null,
                 }));
                 setDeals(dealsWithImages);
             } catch (err) {
@@ -114,7 +113,7 @@ export default function HomePage({ requireAuth }) {
         try {
             if (!currentUser || !token) return;
                         
-            const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/user/profile", {
+            const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/user/profile`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) {
@@ -133,11 +132,7 @@ export default function HomePage({ requireAuth }) {
         fetchProfile();
     }, [currentUser, token]);
 
-    function handleLoginSuccess() {
-        fetchProfile();
-        setShowLoginModal(false);
-        navigate('/profile');
-    }
+
 
     // Sort/filter deals based on selectedTab and selectedCategory
     let displayedDeals = [...deals];
@@ -198,6 +193,7 @@ export default function HomePage({ requireAuth }) {
                 }}
             >
                 {loading && <div className="text-center py-8">Loading deals...</div>}
+                
                 {error && <div className="text-danger">{error}</div>}
                 {!loading && !error && displayedDeals.length === 0 && (
                     <div className="text-center py-8">
@@ -251,13 +247,6 @@ export default function HomePage({ requireAuth }) {
                 onSelect={cat => setSelectedCategory(cat)}
                 selectedCategory={selectedCategory}
                 categoryIcons={categoryIcons}
-            />
-            <LoginSignupModal
-                show={showLoginModal}
-                onHide={() => setShowLoginModal(false)}
-                onLoginSuccess={() => {
-                  setShowLoginModal(false);
-                }}
             />
         </>
     )

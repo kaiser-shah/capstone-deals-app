@@ -2,17 +2,17 @@ import React, { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-
+import { useNavigate } from "react-router-dom";
 const BACKEND_URL = "https://capstone-deals-app-endpoints.vercel.app";
 
-export default function LoginSignupModal({ show, onHide, onLoginSuccess }) {
+export default function LoginSignupModal({ show, onHide, onLoginSuccess, userProfile }) { //
   const [step, setStep] = useState("email"); // 'email', 'login', 'signup'
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   // Reset modal state on close
   function handleClose() {
     setStep("email");
@@ -54,8 +54,9 @@ export default function LoginSignupModal({ show, onHide, onLoginSuccess }) {
     const auth = getAuth();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      onLoginSuccess && onLoginSuccess();
-      handleClose();
+      console.log("Login successful")
+      onLoginSuccess(); // This will trigger the useEffect in HomePage to fetch the profile
+      // handleClose() and navigate are handled in the useEffect in HomePage. 
     } catch (err) {
       setError("Incorrect email or password.");
     } finally {

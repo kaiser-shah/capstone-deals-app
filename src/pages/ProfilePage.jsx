@@ -40,7 +40,6 @@ export default function ProfilePage({ setUserProfile }) {
           
           // Viewing another user's profile by username
           const res = await fetch(`${BACKEND_URL}/user/${routeUsername}`);
-          console.log(res)
           if (!res.ok) { setNotFound(true); setLoading(false); return; }
           const data = await res.json();
           profileData = data.user;
@@ -52,7 +51,7 @@ export default function ProfilePage({ setUserProfile }) {
             return; 
           }
                     
-          const res = await fetch(`${BACKEND_URL}/user/profile`, {
+          const res = await fetch(`${BACKEND_URL}/user/${routeUsername}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.ok) {
@@ -303,7 +302,8 @@ export default function ProfilePage({ setUserProfile }) {
                 <div style={{ position: 'absolute', top: 0, right: 0, fontSize: 12, color: '#888', fontWeight: 500 }}>
                   {formatDatePosted(deal.created_at)}
                 </div>
-                <img src={deal.primary_image_url || deal.image_url || "/fallback-deal.png"} alt={deal.title} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
+                <img src={deal.primary_image_url || deal.image_url || "/fallback-deal.png"} 
+                alt={deal.title} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }} />
                 <div className="flex-grow-1">
                   <div className="fw-bold" style={{ fontSize: 15 }}>{deal.title}</div>
                   <div className="text-secondary" style={{ fontSize: 13,  overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{deal.description}</div>

@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../AuthProvider";
 
 const items = [
   { label: "Menu", icon: "bi-list" },
@@ -11,10 +12,11 @@ const items = [
 
 const AVATAR_PLACEHOLDER = "/fallback-avatar.png";
 
-export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClick, onMenuClick, onNotificationClick }) {
+export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, userProfile, onPostClick, onMenuClick, onNotificationClick }) {
   const [selected, setSelected] = useState(null);
   const navigate = useNavigate();
   const navRef = useRef(null);
+  const { currentUser } = useContext(AuthContext);
 
   // Remove selected state when clicking outside the navbar
   useEffect(() => {
@@ -102,7 +104,9 @@ export default function Bottom({ onLoginClick, isLoggedIn, avatarUrl, onPostClic
               setSelected(idx);
               setTimeout(() => setSelected(null), 100); // Remove highlight right after click
               if (item.label === "Log in" && isLoggedIn) {
-                navigate("/profile");
+                if (userProfile && userProfile.username) {
+                  navigate(`/user/${userProfile.username}`);
+                }
               } else if (item.label === "Log in" && onLoginClick) {
                 onLoginClick();
               } else if (item.label === "Post") {

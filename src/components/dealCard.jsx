@@ -172,7 +172,7 @@ export default function DealCard({
             <span
               className="text-secondary"
               style={{ fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
-              onClick={e => { e.stopPropagation(); navigate(`/profile/${postedBy}`); }}
+              onClick={e => { e.stopPropagation(); navigate(`/user/${postedBy}`); }}
             >
               Posted by {postedBy}
             </span>

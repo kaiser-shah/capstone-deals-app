@@ -206,12 +206,6 @@ export default function DealPage() {
         removing={removing}
       />
 
-      {/* More sections to be implemented here */}
-      <LoginSignupModal
-        show={showLoginModal}
-        onHide={() => setShowLoginModal(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
     </div>
   );
 }
@@ -584,7 +578,7 @@ function DealDetailsSection({ deal }) {
             style={{ fontWeight: 400, fontSize: 15, cursor: 'pointer', textDecoration: 'underline' }}
             onClick={e => {
               e.stopPropagation();
-              navigate(`/profile/${postedBy}`);
+              navigate(`/user/${postedBy}`);
             }}
           >
             Posted by {username}

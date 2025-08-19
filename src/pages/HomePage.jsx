@@ -98,8 +98,8 @@ export default function HomePage({ requireAuth }) {
                     if (res.ok) {
                         let data = await res.json();
                         // Move 'Other' to the end
-                        const others = data.filter(c => c.category_name.toLowerCase() === 'other');
-                        const rest = data.filter(c => c.category_name.toLowerCase() !== 'other');
+                        const others = data.filter(c => c.category_name.toLowerCase() === 'other'); // 
+                        const rest = data.filter(c => c.category_name.toLowerCase() !== 'other'); 
                         setCategories([...rest, ...others]);
                     }
                 } catch {}
@@ -207,7 +207,7 @@ export default function HomePage({ requireAuth }) {
                 )}
                 {!loading && !error && displayedDeals.map((deal) => {
                     // Fix image URLs
-                    let imageUrl = deal.imageUrl || DEAL_PLACEHOLDER;
+                    let imageUrl = deal.primary_image_url|| DEAL_PLACEHOLDER;
                     if (imageUrl && !imageUrl.startsWith("http")) {
                         imageUrl = BACKEND_URL + imageUrl;
                     }

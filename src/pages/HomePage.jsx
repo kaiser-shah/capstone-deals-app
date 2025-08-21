@@ -79,7 +79,9 @@ export default function HomePage({ requireAuth }) {
                 const dealsWithImages = data.map(deal => ({
                     ...deal,
                     imageUrl: deal.primary_image_url || deal.image_url || null,
+                    
                 }));
+                
                 setDeals(dealsWithImages);
             } catch (err) {
                 setError(err.message);
@@ -207,7 +209,14 @@ export default function HomePage({ requireAuth }) {
                 )}
                 {!loading && !error && displayedDeals.map((deal) => {
                     // Fix image URLs
-                    let imageUrl = deal.primary_image_url|| DEAL_PLACEHOLDER;
+                    let imageUrl = DEAL_PLACEHOLDER;
+                    if (deal.primary_image_url) {
+                        imageUrl = deal.primary_image_url;
+                    } else if (deal.images && deal.images.length > 0) {
+                        // Find the image with is_primary_pic true, or fallback to the first image (lowest display_order)
+                        const primary = deal.images.find(img => img.is_primary_pic);
+                        imageUrl = (primary ? primary.image_url : deal.images[0].image_url) || DEAL_PLACEHOLDER;
+                    }
                     if (imageUrl && !imageUrl.startsWith("http")) {
                         imageUrl = BACKEND_URL + imageUrl;
                     }

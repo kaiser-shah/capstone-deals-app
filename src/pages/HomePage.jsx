@@ -49,7 +49,6 @@ export function getDomain(url) {
 }
 
 export default function HomePage({ requireAuth }) {
-    // ✅ CORRECT - Move useContext to top level
     const { currentUser, token } = useContext(AuthContext);
     
     const [deals, setDeals] = useState([]);
@@ -58,50 +57,113 @@ export default function HomePage({ requireAuth }) {
     const [userProfile, setUserProfile] = useState(null);
     const [selectedTab, setSelectedTab] = useState(0); // 0: Hottest, 1: Trending, 2: All, 3: Categories
     const [showCategoriesModal, setShowCategoriesModal] = useState(false);
-    const [categories, setCategories] = useState([]); // now array of {category_id, category_name, deals}
+    const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("");
-    const [categoryDeals, setCategoryDeals] = useState([]);
     const [showSideBar, setShowSideBar] = useState(false);
-    const navigate = useNavigate();
-    const [searchQuery, setSearchQuery] = useState(""); // NEW
+    const [searchQuery, setSearchQuery] = useState("");
+    
+    // Pagination state
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        hasNextPage: false,
+        hasPrevPage: false
+    });
 
-    useEffect(() => {
-        async function fetchDeals() {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/deals");
-                if (!res.ok) throw new Error("Failed to fetch deals");
-                let data = await res.json();
-                // Sort by net_votes descending
-                data.sort((a, b) => b.net_votes - a.net_votes);
-                // Use only the primary_image_url from the deal object
-                const dealsWithImages = data.map(deal => ({
-                    ...deal,
-                    imageUrl: deal.primary_image_url || deal.image_url || null,
-                    
-                }));
-                
-                setDeals(dealsWithImages);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
+    // Function to fetch deals with pagination and sorting
+    async function fetchDeals(page = 1, sortBy = 'net_votes', order = 'desc') {
+        setLoading(true);
+        setError(null);
+        try {
+            // Build URL with query parameters
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: '20',
+                sort: sortBy,
+                order: order
+            });
+
+            const headers = {};
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
             }
-        }
-        fetchDeals();
-    }, []);
 
+            const res = await fetch(`${BACKEND_URL}/deals?${params}`, { headers });
+            
+            if (!res.ok) throw new Error("Failed to fetch deals");
+            
+            const data = await res.json();
+            
+            // Handle both old format (array) and new format (object with deals array)
+            if (Array.isArray(data)) {
+                // Old format - fallback
+                setDeals(data);
+                setPagination({
+                    currentPage: 1,
+                    totalPages: 1,
+                    totalCount: data.length,
+                    hasNextPage: false,
+                    hasPrevPage: false
+                });
+            } else {
+                // New format with pagination
+                setDeals(data.deals || []);
+                setPagination(data.pagination || {
+                    currentPage: 1,
+                    totalPages: 1,
+                    totalCount: 0,
+                    hasNextPage: false,
+                    hasPrevPage: false
+                });
+            }
+        } catch (err) {
+            setError(err.message);
+            setDeals([]);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Initial load
+    useEffect(() => {
+        fetchDeals();
+    }, [token]); // Re-fetch when token changes (user logs in/out)
+
+    // Handle tab changes
+    useEffect(() => {
+        let sortBy = 'net_votes';
+        let order = 'desc';
+        
+        if (selectedTab === 0) {
+            // Hottest - sort by net_votes descending (default)
+            sortBy = 'net_votes';
+            order = 'desc';
+        } else if (selectedTab === 1) {
+            // Trending - for now, same as hottest, but you could add time-based logic here
+            sortBy = 'net_votes';
+            order = 'desc';
+        } else if (selectedTab === 2) {
+            // All/Recent - sort by creation date
+            sortBy = 'created_at';
+            order = 'desc';
+        }
+        
+        if (selectedTab !== 3) { // Don't fetch for categories tab
+            fetchDeals(1, sortBy, order);
+        }
+    }, [selectedTab]);
+
+    // Categories fetch (unchanged)
     useEffect(() => {
         if (showCategoriesModal) {
             async function fetchCategoriesWithDeals() {
                 try {
-                    const res = await fetch("https://capstone-deals-app-endpoints.vercel.app/categories-with-deals");
+                    const res = await fetch(`${BACKEND_URL}/categories-with-deals`);
                     if (res.ok) {
                         let data = await res.json();
-                        // Move 'Other' to the end
-                        const others = data.filter(c => c.category_name.toLowerCase() === 'other'); // 
-                        const rest = data.filter(c => c.category_name.toLowerCase() !== 'other'); 
+                        const others = data.filter(c => c.category_name.toLowerCase() === 'other');
+                        const rest = data.filter(c => c.category_name.toLowerCase() !== 'other');
                         setCategories([...rest, ...others]);
                     }
                 } catch {}
@@ -110,12 +172,12 @@ export default function HomePage({ requireAuth }) {
         }
     }, [showCategoriesModal]);
 
-    // ✅ CORRECT - Function now uses the context values from top level
+    // Profile fetch (unchanged)
     async function fetchProfile() {
         try {
             if (!currentUser || !token) return;
                         
-            const res = await fetch(`https://capstone-deals-app-endpoints.vercel.app/user/profile`, {
+            const res = await fetch(`${BACKEND_URL}/user/profile`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) {
@@ -129,29 +191,44 @@ export default function HomePage({ requireAuth }) {
         }
     }
 
-    // ✅ CORRECT - useEffect will run when currentUser or token changes
     useEffect(() => {
         fetchProfile();
     }, [currentUser, token]);
 
+    // Handle pagination
+    const handlePageChange = (newPage) => {
+        let sortBy = 'net_votes';
+        let order = 'desc';
+        
+        if (selectedTab === 0) {
+            sortBy = 'net_votes';
+            order = 'desc';
+        } else if (selectedTab === 1) {
+            sortBy = 'net_votes';
+            order = 'desc';
+        } else if (selectedTab === 2) {
+            sortBy = 'created_at';
+            order = 'desc';
+        }
+        
+        fetchDeals(newPage, sortBy, order);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
-
-    // Sort/filter deals based on selectedTab and selectedCategory
+    // Filter deals for display
     let displayedDeals = [...deals];
-    if (selectedTab === 0) {
-        displayedDeals.sort((a, b) => b.net_votes - a.net_votes);
-    } else if (selectedTab === 1) {
+
+    // Handle trending filter (6 hours) - this is done on frontend since it's time-sensitive
+    if (selectedTab === 1) {
         const now = new Date();
-        displayedDeals = displayedDeals
-            .filter(deal => {
-                const created = new Date(deal.created_at);
-                return (now - created) / (1000 * 60 * 60) <= 6;
-            })
-            .sort((a, b) => b.net_votes - a.net_votes);
-    } else if (selectedTab === 2) {
-        displayedDeals.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    } else if (selectedTab === 3) {
-        // Categories: show only deals for selectedCategory
+        displayedDeals = displayedDeals.filter(deal => {
+            const created = new Date(deal.created_at);
+            return (now - created) / (1000 * 60 * 60) <= 6;
+        });
+    }
+
+    // Handle categories
+    if (selectedTab === 3) {
         if (selectedCategory) {
             const cat = categories.find(c => c.category_name === selectedCategory);
             displayedDeals = cat ? [...cat.deals] : [];
@@ -160,7 +237,7 @@ export default function HomePage({ requireAuth }) {
         }
     }
 
-    // Filter by search query
+    // Search filter
     if (searchQuery.trim() !== "") {
         const q = searchQuery.trim().toLowerCase();
         displayedDeals = displayedDeals.filter(deal =>
@@ -172,7 +249,7 @@ export default function HomePage({ requireAuth }) {
     }
 
     const categoryIcons = {
-        "Fashion": "bi-sunglasses", // or "bi-shirt" if available
+        "Fashion": "bi-sunglasses",
         "Home & Living": "bi-house-door",
         "Electronics": "bi-phone",
         "Food & Beverage": "bi-cup-straw",
@@ -190,13 +267,14 @@ export default function HomePage({ requireAuth }) {
                 id="homepage-deals"
                 className="container-fluid px-2"
                 style={{
-                    paddingTop: 130,   // adjust to match your nav height
-                    paddingBottom: 60, // adjust to match your footer height
+                    paddingTop: 130,
+                    paddingBottom: 60,
                 }}
             >
                 {loading && <div className="text-center py-8">Loading deals...</div>}
                 
                 {error && <div className="text-danger">{error}</div>}
+                
                 {!loading && !error && displayedDeals.length === 0 && (
                     <div className="text-center py-8">
                         <h2 className="text-2xl md:text-3xl font-semibold text-gray-600 mb-2">
@@ -207,25 +285,27 @@ export default function HomePage({ requireAuth }) {
                         </div>
                     </div>
                 )}
+
                 {!loading && !error && displayedDeals.map((deal) => {
                     // Fix image URLs
                     let imageUrl = DEAL_PLACEHOLDER;
                     if (deal.primary_image_url) {
                         imageUrl = deal.primary_image_url;
                     } else if (deal.images && deal.images.length > 0) {
-                        // Find the image with is_primary_pic true, or fallback to the first image (lowest display_order)
                         const primary = deal.images.find(img => img.is_primary_pic);
                         imageUrl = (primary ? primary.image_url : deal.images[0].image_url) || DEAL_PLACEHOLDER;
                     }
                     if (imageUrl && !imageUrl.startsWith("http")) {
                         imageUrl = BACKEND_URL + imageUrl;
                     }
+
                     // Use top-level username and profile_pic from deal
                     let postedBy = deal.username || "Unknown";
                     let avatarUrl = deal.profile_pic || AVATAR_PLACEHOLDER;
                     if (avatarUrl && !avatarUrl.startsWith("http")) {
                         avatarUrl = BACKEND_URL + avatarUrl;
                     }
+
                     return (
                         <DealCard
                             key={deal.deal_id}
@@ -248,7 +328,66 @@ export default function HomePage({ requireAuth }) {
                         />
                     );
                 })}
+
+                {/* Pagination Controls - only show for non-category tabs */}
+                {!loading && !error && selectedTab !== 3 && pagination.totalPages > 1 && (
+                    <div className="d-flex justify-content-center align-items-center mt-4 mb-4">
+                        <nav>
+                            <ul className="pagination">
+                                <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link" 
+                                        onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                        disabled={!pagination.hasPrevPage}
+                                    >
+                                        Previous
+                                    </button>
+                                </li>
+                                
+                                {/* Page numbers */}
+                                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (pagination.totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (pagination.currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                                        pageNum = pagination.totalPages - 4 + i;
+                                    } else {
+                                        pageNum = pagination.currentPage - 2 + i;
+                                    }
+                                    
+                                    return (
+                                        <li key={pageNum} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
+                                            <button 
+                                                className="page-link"
+                                                onClick={() => handlePageChange(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+                                
+                                <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link"
+                                        onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                        disabled={!pagination.hasNextPage}
+                                    >
+                                        Next
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                        
+                        <div className="ms-3 text-muted">
+                            Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalCount} deals)
+                        </div>
+                    </div>
+                )}
             </div>
+
             <CategoriesModal
                 show={showCategoriesModal}
                 onHide={() => setShowCategoriesModal(false)}
@@ -258,5 +397,5 @@ export default function HomePage({ requireAuth }) {
                 categoryIcons={categoryIcons}
             />
         </>
-    )
+    );
 }

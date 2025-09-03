@@ -333,14 +333,16 @@ export default function HomePage({ requireAuth }) {
                 {!loading && !error && selectedTab !== 3 && pagination.totalPages > 1 && (
                     <div className="d-flex justify-content-center align-items-center mt-4 mb-4">
                         <nav>
-                            <ul className="pagination">
+                            <ul className="pagination" style={{ gap: 5 }}>
                                 <li className={`page-item ${!pagination.hasPrevPage ? 'disabled' : ''}`}>
                                     <button 
                                         className="page-link" 
                                         onClick={() => handlePageChange(pagination.currentPage - 1)}
                                         disabled={!pagination.hasPrevPage}
+                                        style={{backgroundColor: 'transparent', border: 'none', borderRadius: '45%', cursor: 'pointer'}}
+                                        hover={{backgroundColor: 'transparent', border: 'none', cursor: 'pointer'}}
                                     >
-                                        Previous
+                                        <i className="bi bi-caret-left-fill" style={{color: 'red'}}></i>
                                     </button>
                                 </li>
                                 
@@ -358,10 +360,17 @@ export default function HomePage({ requireAuth }) {
                                     }
                                     
                                     return (
-                                        <li key={pageNum} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`}>
+                                        <li key={pageNum} className={`page-item ${pageNum === pagination.currentPage ? 'active' : ''}`} style={{cursor: 'pointer'}}>
                                             <button 
                                                 className="page-link"
                                                 onClick={() => handlePageChange(pageNum)}
+                                                style={{
+                                                    backgroundColor: pageNum === pagination.currentPage ? 'red' : 'transparent', 
+                                                    border: pageNum === pagination.currentPage ? '2px solid red' : '2px solid transparent', 
+                                                    borderRadius: '45%', 
+                                                    color: pageNum === pagination.currentPage ? 'white' : 'red', 
+                                                    cursor: 'pointer'}}
+                                                hover={{backgroundColor: 'red', border: '1px solid red', borderRadius: '45%', color: 'white', cursor: 'pointer'}}
                                             >
                                                 {pageNum}
                                             </button>
@@ -374,16 +383,18 @@ export default function HomePage({ requireAuth }) {
                                         className="page-link"
                                         onClick={() => handlePageChange(pagination.currentPage + 1)}
                                         disabled={!pagination.hasNextPage}
+                                        style={{backgroundColor: 'transparent', border: 'none', cursor: 'pointer'}}
+                                        hover={{backgroundColor: 'transparent', border: 'none', cursor: 'pointer'}}
                                     >
-                                        Next
+                                        <i className="bi bi-caret-right-fill" style={{color: 'red'}}></i>
                                     </button>
                                 </li>
                             </ul>
                         </nav>
-                        
-                        <div className="ms-3 text-muted">
+                        {/* // removed page number display */}
+                        {/* <div className="ms-3 text-muted">
                             Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalCount} deals)
-                        </div>
+                        </div> */}
                     </div>
                 )}
             </div>

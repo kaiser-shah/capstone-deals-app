@@ -154,19 +154,47 @@ export default function HomePage({ requireAuth }) {
         }
     }, [selectedTab]);
 
-    // Categories fetch (unchanged)
+    // Categories fetch (Original)
+    // useEffect(() => {
+    //     if (showCategoriesModal) {
+    //         async function fetchCategoriesWithDeals() {
+    //             try {
+    //                 const res = await fetch(`${BACKEND_URL}/categories-with-deals`);
+    //                 if (res.ok) {
+    //                     let data = await res.json();
+    //                     const others = data.filter(c => c.category_name.toLowerCase() === 'other');
+    //                     const rest = data.filter(c => c.category_name.toLowerCase() !== 'other');
+    //                     setCategories([...rest, ...others]);
+    //                 }
+    //             } catch {}
+    //         }
+    //         fetchCategoriesWithDeals();
+    //     }
+    // }, [showCategoriesModal]);
+
     useEffect(() => {
         if (showCategoriesModal) {
             async function fetchCategoriesWithDeals() {
                 try {
-                    const res = await fetch(`${BACKEND_URL}/categories-with-deals`);
+                    const res = await fetch(`${BACKEND_URL}/categories-with-deals`, {
+                        credentials: "include", // if you need cookies or auth
+                        headers: {
+                            "Content-Type": "application/json",
+                            // Add Authorization header if needed:
+                            // "Authorization": `Bearer ${yourToken}`
+                        }
+                    });
                     if (res.ok) {
                         let data = await res.json();
+                        // Move "Other" category to the end
                         const others = data.filter(c => c.category_name.toLowerCase() === 'other');
                         const rest = data.filter(c => c.category_name.toLowerCase() !== 'other');
                         setCategories([...rest, ...others]);
                     }
-                } catch {}
+                } catch (err) {
+                    // Optionally handle error
+                    setCategories([]);
+                }
             }
             fetchCategoriesWithDeals();
         }
